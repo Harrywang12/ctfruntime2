@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<!--
+  SDG CTF Challenge Runtime
+  ==========================
+  
+  This runtime is hosted on a separate domain (e.g., https://challenges.sdgctf.com)
+  and is used ONLY to host intentionally vulnerable challenge experiences.
+  
+  Integration:
+  - The main contest site launches challenges by opening:
+      https://challenges.sdgctf.com/r/:contestId/:runtimeSlug?token=<launch_token>
+  - The launch_token is a one-time token that authorizes this runtime session.
+  - This runtime has NO access to main-site authentication or cookies.
+  
+  Security:
+  - No Supabase keys are embedded here.
+  - All authorization is performed by the backend Edge Function.
+  - The runtime operates under a strict CSP and never handles auth cookies.
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="referrer" content="no-referrer">
+  <title>SDG CTF - Challenge Runtime</title>
+  <link rel="stylesheet" href="./runtime.css">
+</head>
+<body>
+  <main class="runtime-container">
+    <div class="runtime-card">
+      <header class="runtime-header">
+        <div class="logo">
+          <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+            <polyline points="2 17 12 22 22 17"></polyline>
+            <polyline points="2 12 12 17 22 12"></polyline>
+          </svg>
+          <span class="logo-text">SDG CTF</span>
+        </div>
+        <span class="runtime-badge">Challenge Runtime</span>
+      </header>
+
+      <div id="status-panel" class="status-panel">
+        <div class="status-icon" id="status-icon">
+          <div class="spinner"></div>
+        </div>
+        <p class="status-text" id="status-text">Initializing...</p>
+      </div>
+
+      <div id="runtime-info" class="runtime-info hidden">
+        <h2 class="info-title">Runtime Initialized</h2>
+        <dl class="info-list">
+          <div class="info-item">
+            <dt>Contest</dt>
+            <dd id="info-contest">—</dd>
+          </div>
+          <div class="info-item">
+            <dt>Challenge</dt>
+            <dd id="info-challenge">—</dd>
+          </div>
+          <div class="info-item">
+            <dt>Team</dt>
+            <dd id="info-team">—</dd>
+          </div>
+        </dl>
+        <div class="divider"></div>
+        <div id="challenge-surface" class="challenge-surface">
+          <!-- Vulnerable challenge surface will be rendered here -->
+        </div>
+      </div>
+
+      <div id="error-panel" class="error-panel hidden">
+        <div class="error-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+        </div>
+        <h2 class="error-title" id="error-title">Error</h2>
+        <p class="error-message" id="error-message"></p>
+        <p class="error-hint">Please launch this challenge from the main contest site.</p>
+      </div>
+
+      <footer class="runtime-footer">
+        <p>Isolated challenge environment • No cookies • No auth</p>
+      </footer>
+    </div>
+  </main>
+
+  <script src="./runtime.js" defer></script>
+</body>
+</html>
