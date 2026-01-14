@@ -1,7 +1,7 @@
 {
   "rewrites": [
     {
-      "source": "/r/:contestId/:runtimeSlug((?!\\.).*)",
+      "source": "/r/(.*)",
       "destination": "/index.html"
     }
   ]
