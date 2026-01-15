@@ -36,9 +36,15 @@
   const REDEEM_URL = 'https://vgwukffsjudbybdeuodn.supabase.co/functions/v1/redeem-challenge-token';
 
   /**
+   * Backend Edge Function URL for claiming a flag after a solve.
+   * The function must validate the provided proof server-side.
+   */
+  const CLAIM_URL = 'https://vgwukffsjudbybdeuodn.supabase.co/functions/v1/claim-runtime-flag';
+
+  /**
    * Set to false in production to disable console logging of sensitive data.
    */
-  const DEBUG_MODE = true;
+  const DEBUG_MODE = false;
 
   // ==========================================================================
   // DOM ELEMENTS
@@ -177,6 +183,7 @@
         </div>
         <div class="challenge-panel">
           <div class="output" id="vault-output" role="status" aria-live="polite">Waiting for input…</div>
+          <div class="flag hidden" id="vault-flag" aria-label="Claimed flag"></div>
           <p class="surface-note">
             Demo behavior only: unlocking shows a non-sensitive artifact preview.
             Real challenges should verify flags server-side.
@@ -189,11 +196,22 @@
     const submit = document.getElementById('vault-submit');
     const reset = document.getElementById('vault-reset');
     const out = document.getElementById('vault-output');
+    const flagEl = document.getElementById('vault-flag');
 
     function write(message, kind) {
       out.classList.remove('ok', 'bad');
       if (kind) out.classList.add(kind);
       out.textContent = message;
+    }
+
+    function showFlag(flag) {
+      flagEl.textContent = flag;
+      flagEl.classList.remove('hidden');
+    }
+
+    function hideFlag() {
+      flagEl.textContent = '';
+      flagEl.classList.add('hidden');
     }
 
     submit.addEventListener('click', () => {
@@ -206,6 +224,28 @@
       if (value === expected) {
         const artifactPreview = deriveHex(seed, 'artifact_preview', 24);
         write(`Unlocked vault ${vaultId}. Artifact preview: ${artifactPreview}…`, 'ok');
+
+        // Claim the flag from the backend using a proof.
+        // proof = the solver output we want validated server-side.
+        hideFlag();
+
+        (async () => {
+          if (!ctx.launchToken) {
+            write('Solved locally, but missing launch token to claim flag.', 'bad');
+            return;
+          }
+
+          write('Solved. Claiming flag…', 'ok');
+          try {
+            const flag = await claimFlag(ctx.launchToken, value);
+            write('Flag claimed. Copy and submit it on the main platform.', 'ok');
+            showFlag(flag);
+          } catch (e) {
+            const msg = (e && e.message) ? e.message : 'Unknown error';
+            write(`Solved locally, but flag claim failed: ${msg}`, 'bad');
+          }
+        })();
+
         return;
       }
 
@@ -215,6 +255,7 @@
     reset.addEventListener('click', () => {
       input.value = '';
       write('Waiting for input…');
+      hideFlag();
       input.focus();
     });
   }
@@ -328,7 +369,7 @@
   /**
    * Show success state with runtime info.
    */
-  function showSuccess(runtimeState, route) {
+  function showSuccess(runtimeState, route, launchToken) {
     elements.statusPanel.classList.add('hidden');
     elements.errorPanel.classList.add('hidden');
     elements.runtimeInfo.classList.remove('hidden');
@@ -339,7 +380,7 @@
     elements.infoTeam.textContent = maskUUID(runtimeState.team_id);
 
     // Render the challenge surface selected by runtimeSlug
-    renderChallengeSurface(runtimeState, route);
+    renderChallengeSurface(runtimeState, route, launchToken);
   }
 
   /**
@@ -351,10 +392,10 @@
    * - Derive database content, usernames, file paths, etc. from the seed
    * - NEVER derive or display the actual flag in frontend code
    */
-  function renderChallengeSurface(runtimeState, route) {
+  function renderChallengeSurface(runtimeState, route, launchToken) {
     const runtimeSlug = normalizeSlug(route && route.runtimeSlug);
     const render = CHALLENGES[runtimeSlug] || CHALLENGES.demo;
-    render({ runtimeState, route, runtimeSlug });
+    render({ runtimeState, route, runtimeSlug, launchToken });
   }
 
   // ==========================================================================
@@ -410,6 +451,46 @@
     return data;
   }
 
+  /**
+   * Claim the final flag after the user solves.
+   * 
+   * Contract:
+   * - POST ${CLAIM_URL}
+   * - Body: { token, proof }
+   * - Response: { flag: "SDG{...}" } (or compatible)
+   */
+  async function claimFlag(token, proof) {
+    const response = await fetch(CLAIM_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({ token, proof }),
+      credentials: 'omit',
+      cache: 'no-store',
+    });
+
+    if (!response.ok) {
+      let errorMessage = `HTTP ${response.status}`;
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.error || errorData.message || errorMessage;
+      } catch {
+        errorMessage = response.statusText || errorMessage;
+      }
+      throw new Error(errorMessage);
+    }
+
+    const data = await response.json();
+    const flag = data.flag || data.FLAG || data.sdg_flag || data.result;
+    if (!flag || typeof flag !== 'string') {
+      throw new Error('Invalid response: missing flag');
+    }
+
+    return flag;
+  }
+
   // ==========================================================================
   // MAIN INITIALIZATION
   // ==========================================================================
@@ -419,9 +500,6 @@
 
     // Parse route (optional, for future use)
     const route = parseRoute();
-    if (DEBUG_MODE && route) {
-      console.log('[SDG Runtime] Route:', route);
-    }
 
     // Extract token from URL
     const token = getTokenFromURL();
@@ -449,19 +527,8 @@
         artifact_seed: runtimeState.artifact_seed,
       });
 
-      // Log in debug mode (REMOVE IN PRODUCTION or redact artifact_seed)
-      if (DEBUG_MODE) {
-        console.log('[SDG Runtime] Initialized:', {
-          contest_id: runtimeState.contest_id,
-          challenge_id: runtimeState.challenge_id,
-          team_id: runtimeState.team_id,
-          // WARNING: In production, do NOT log artifact_seed
-          artifact_seed: '[REDACTED - check window.__SDG_RUNTIME in devtools]',
-        });
-      }
-
       // Show success UI
-      showSuccess(runtimeState, route);
+      showSuccess(runtimeState, route, token);
 
     } catch (error) {
       console.error('[SDG Runtime] Error:', error);

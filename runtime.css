@@ -417,6 +417,19 @@ body {
   background: var(--color-error-bg);
 }
 
+.flag {
+  margin-top: 10px;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-elevated);
+  color: var(--color-text-primary);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  word-break: break-word;
+  user-select: all;
+}
+
 /* Error Panel */
 .error-panel {
   padding: 48px 24px;
