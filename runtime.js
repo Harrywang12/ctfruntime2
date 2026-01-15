@@ -465,6 +465,21 @@
     } catch (error) {
       console.error('[SDG Runtime] Error:', error);
 
+      const message = String(error && error.message ? error.message : '').toLowerCase();
+
+      // Supabase Edge Functions may reject requests if JWT verification is enabled.
+      // Your launch token is a custom one-time token and is NOT a Supabase Auth JWT.
+      // To keep this runtime keyless (no anon keys embedded), the Edge Function must
+      // be deployed/configured to accept the launch token (typically verify_jwt = false)
+      // and perform its own validation.
+      if (message.includes('invalid jwt') || message.includes('missing authorization header')) {
+        showError(
+          'Backend Auth Misconfigured',
+          'The redeem function is treating the launch token as a Supabase Auth JWT. Configure the Edge Function to accept the launch token (no JWT verification) and validate it server-side.'
+        );
+        return;
+      }
+
       // Determine error type and show appropriate message
       if (error instanceof TypeError && error.message.includes('fetch')) {
         showError(
