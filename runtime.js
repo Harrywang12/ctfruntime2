@@ -373,6 +373,10 @@
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        // Some deployments enforce an Authorization header even for one-time
+        // launch tokens. This does NOT involve cookies or Supabase keys.
+        // We still send the token in the JSON body to match the runtime contract.
+        'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify({ token }),
       credentials: 'omit',  // CRITICAL: Never send cookies
