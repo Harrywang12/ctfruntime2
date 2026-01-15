@@ -483,9 +483,51 @@
     }
 
     const data = await response.json();
-    const flag = data.flag || data.FLAG || data.sdg_flag || data.result;
+
+    // If the backend returns an error payload with 200, surface it.
+    if (data && typeof data === 'object') {
+      const errorMessage = data.error || data.message;
+      if (typeof errorMessage === 'string' && errorMessage.trim()) {
+        throw new Error(errorMessage);
+      }
+    }
+
+    // Accept multiple compatible response shapes.
+    // Examples seen in the wild:
+    // - { flag: "SDG{...}" }
+    // - { data: { flag: "SDG{...}" } }
+    // - { result: "SDG{...}" }
+    // - { data: { result: "SDG{...}" } }
+    let flag = null;
+    if (typeof data === 'string') {
+      flag = data;
+    } else if (data && typeof data === 'object') {
+      flag =
+        data.flag ||
+        data.FLAG ||
+        data.sdg_flag ||
+        data.result ||
+        (data.data && (data.data.flag || data.data.FLAG || data.data.sdg_flag || data.data.result)) ||
+        (data.payload && (data.payload.flag || data.payload.FLAG || data.payload.sdg_flag || data.payload.result));
+
+      // Sometimes the flag is nested inside an object.
+      if (flag && typeof flag === 'object') {
+        flag = flag.flag || flag.value || flag.text || null;
+      }
+    }
+
     if (!flag || typeof flag !== 'string') {
-      throw new Error('Invalid response: missing flag');
+      const topKeys = data && typeof data === 'object' ? Object.keys(data).slice(0, 12).join(', ') : typeof data;
+      const dataKeys =
+        data && typeof data === 'object' && data.data && typeof data.data === 'object'
+          ? Object.keys(data.data).slice(0, 12).join(', ')
+          : '';
+
+      throw new Error(
+        'Invalid response: missing flag' +
+          (topKeys ? ` (top keys: ${topKeys})` : '') +
+          (dataKeys ? ` (data keys: ${dataKeys})` : '')
+      );
     }
 
     return flag;
