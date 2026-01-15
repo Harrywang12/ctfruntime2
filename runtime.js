@@ -167,7 +167,8 @@
           <div class="field">
             <label class="label" for="vault-phrase">Access phrase</label>
             <input class="input" id="vault-phrase" name="phrase" placeholder="e.g. ember-cobalt-atlas-1a2b" autocomplete="off" />
-            <p class="help">Hint: ${escapeText(w1)} + ${escapeText(w2)} + ${escapeText(w3)} + '-' + 4 hex chars</p>
+            <p class="help">Vault ID: <code>${escapeText(vaultId)}</code></p>
+            <p class="help">Hint: phrase is <code>${escapeText(w1)}-${escapeText(w2)}-${escapeText(w3)}-</code> + the first 4 hex chars of the Vault ID</p>
           </div>
           <div class="actions">
             <button class="button" id="vault-submit" type="button">Check phrase</button>
