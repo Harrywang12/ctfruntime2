@@ -507,6 +507,7 @@
         data.FLAG ||
         data.sdg_flag ||
         data.result ||
+        data.correct ||
         (data.data && (data.data.flag || data.data.FLAG || data.data.sdg_flag || data.data.result)) ||
         (data.payload && (data.payload.flag || data.payload.FLAG || data.payload.sdg_flag || data.payload.result));
 
@@ -514,6 +515,27 @@
       if (flag && typeof flag === 'object') {
         flag = flag.flag || flag.value || flag.text || null;
       }
+    }
+
+    // Some claim endpoints return `{ correct: true }` on success without returning the flag.
+    // If `correct` is a boolean, treat this as a backend contract mismatch.
+    if ((!flag || typeof flag !== 'string') && data && typeof data === 'object' && typeof data.correct === 'boolean') {
+      const topKeys = Object.keys(data).slice(0, 12).join(', ');
+      throw new Error(
+        'Claim accepted (correct=true) but backend did not return a flag. ' +
+          'Update claim-runtime-flag to return `{ flag: "SDG{...}" }`.' +
+          (topKeys ? ` (top keys: ${topKeys})` : '')
+      );
+    }
+
+    // If the backend overloads `correct` to contain the flag as a string, accept it.
+    if (typeof flag === 'string') {
+      const trimmed = flag.trim();
+      if (/^SDG\{[^}]+\}$/.test(trimmed)) {
+        return trimmed;
+      }
+      // Keep allowing other string shapes via existing behavior below.
+      flag = trimmed;
     }
 
     if (!flag || typeof flag !== 'string') {
