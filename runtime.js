@@ -307,7 +307,7 @@
         <div class="challenge-panel">
           <div class="field">
             <label class="label" for="hips-proof">Proof code</label>
-            <input class="input" id="hips-proof" name="proof" placeholder="16 hex characters" autocomplete="off" />
+            <input class="input" id="hips-proof" name="proof" placeholder="32 hex characters" autocomplete="off" />
             <p class="help">Tip: Right-click → Inspect Element and look for hidden elements in the DOM.</p>
           </div>
           <div class="actions">
@@ -443,7 +443,7 @@
         <div class="challenge-panel">
           <div class="field">
             <label class="label" for="sts-proof">Proof code</label>
-            <input class="input" id="sts-proof" name="proof" placeholder="16 hex characters" autocomplete="off" />
+            <input class="input" id="sts-proof" name="proof" placeholder="32 hex characters" autocomplete="off" />
             <p class="help">No hacking required: copy the unusual archive tag from the table.</p>
           </div>
           <div class="actions">
@@ -594,7 +594,7 @@
   function deriveHex(seed, salt) {
     let result = '';
     for (let i = 0; i < 8; i++) {
-      const hash = simpleHash(seed, salt + i.toString());
+      const hash = simpleHash(seed, `${salt}:${i}`);
       result += (hash & 0xffff).toString(16).padStart(4, '0');
     }
     return result;
