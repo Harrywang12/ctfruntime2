@@ -261,16 +261,16 @@
   }
 
   function renderHiddenInPlainSightChallenge(ctx) {
-    // Static, beginner-friendly “view source / inspect element” style challenge.
-    // NOTE: This intentionally embeds a flag in the DOM (as requested).
-    // In production CTF flows, prefer server-side flag claiming.
-    const flag = 'SDG{hidden_in_plain_sight_protect_forests}';
+    // Beginner-friendly “view source / inspect element” style challenge.
+    // Dynamic flag: user finds a per-team proof code, then claims from backend.
+    const seed = ctx.runtimeState.artifact_seed;
+    const proof = `HIPS-${deriveHex(seed, 'hips_proof', 12)}`;
 
     setChallengeSurface(`
       ${renderChallengeHeader(
         ctx.runtimeSlug,
         'Hidden in Plain Sight',
-        'A static SDG 15 page. The flag is hidden using a beginner-friendly method.'
+        'A static SDG 15 page. Find the hidden proof code, then claim the flag.'
       )}
 
       <div class="challenge-panel" role="region" aria-label="SDG 15 poster">
@@ -296,25 +296,103 @@
           <div class="divider sdg-poster-divider"></div>
 
           <p class="sdg-poster-note">
-            Challenge: find the hidden flag on this page.
+            Challenge: find the hidden proof code on this page.
           </p>
         </div>
       </div>
 
-      <!-- FLAG (hidden in plain sight): ${flag} -->
+      <div class="divider"></div>
+
+      <div class="challenge-grid">
+        <div class="challenge-panel">
+          <div class="field">
+            <label class="label" for="hips-proof">Proof code</label>
+            <input class="input" id="hips-proof" name="proof" placeholder="HIPS-…" autocomplete="off" />
+            <p class="help">Tip: this proof is hidden in the page source/DOM (beginner-friendly).</p>
+          </div>
+          <div class="actions">
+            <button class="button" id="hips-claim" type="button">Claim flag</button>
+            <button class="button secondary" id="hips-reset" type="button">Reset</button>
+          </div>
+        </div>
+        <div class="challenge-panel">
+          <div class="output" id="hips-output" role="status" aria-live="polite">Waiting for proof…</div>
+          <div class="flag hidden" id="hips-flag" aria-label="Claimed flag"></div>
+          <p class="surface-note">The real flag is returned by the backend after proof validation.</p>
+        </div>
+      </div>
+
+      <!-- PROOF (hidden in plain sight): ${proof} -->
     `);
+
+    const input = document.getElementById('hips-proof');
+    const claimBtn = document.getElementById('hips-claim');
+    const resetBtn = document.getElementById('hips-reset');
+    const out = document.getElementById('hips-output');
+    const flagEl = document.getElementById('hips-flag');
+
+    function write(message, kind) {
+      out.classList.remove('ok', 'bad');
+      if (kind) out.classList.add(kind);
+      out.textContent = message;
+    }
+
+    function showFlag(flag) {
+      flagEl.textContent = flag;
+      flagEl.classList.remove('hidden');
+    }
+
+    function hideFlag() {
+      flagEl.textContent = '';
+      flagEl.classList.add('hidden');
+    }
+
+    claimBtn.addEventListener('click', () => {
+      const value = (input.value || '').trim();
+      if (!value) {
+        write('Paste the proof code first.', 'bad');
+        return;
+      }
+
+      hideFlag();
+
+      (async () => {
+        if (!ctx.launchToken) {
+          write('Missing launch token; cannot claim flag.', 'bad');
+          return;
+        }
+
+        write('Claiming flag…', 'ok');
+        try {
+          const flag = await claimFlag(ctx.launchToken, value);
+          write('Flag claimed. Copy and submit it on the main platform.', 'ok');
+          showFlag(flag);
+        } catch (e) {
+          const msg = (e && e.message) ? e.message : 'Unknown error';
+          write(`Claim failed: ${msg}`, 'bad');
+        }
+      })();
+    });
+
+    resetBtn.addEventListener('click', () => {
+      input.value = '';
+      write('Waiting for proof…');
+      hideFlag();
+      input.focus();
+    });
   }
 
   function renderSaveTheSpeciesChallenge(ctx) {
-    // Purely logic-based: the flag is plainly present as an unusual note.
-    // No interactions, no exploitation.
-    const flag = 'SDG{save_the_species_read_the_table}';
+    // Purely logic-based: the proof code is present as an unusual note.
+    // The real flag is claimed dynamically from the backend.
+    const seed = ctx.runtimeState.artifact_seed;
+    const proof = `STS-${deriveHex(seed, 'sts_proof', 12)}`;
 
     setChallengeSurface(`
       ${renderChallengeHeader(
         ctx.runtimeSlug,
         'Save the Species',
-        'A simple conservation status table. One row contains an unusual code that is the flag.'
+        'A simple conservation status table. One row contains an unusual code; use it as proof to claim the flag.'
       )}
 
       <table class="surface-table" aria-label="Animals and conservation statuses">
@@ -349,7 +427,7 @@
           <tr>
             <td>Axolotl</td>
             <td>Critically Endangered</td>
-            <td>Unusual archive tag: <strong>${flag}</strong></td>
+            <td>Unusual archive tag: <strong>${proof}</strong></td>
           </tr>
           <tr>
             <td>Snow leopard</td>
@@ -359,10 +437,83 @@
         </tbody>
       </table>
 
-      <p class="surface-note">
-        No hacking required: the flag is the unusual code/note in the table.
-      </p>
+      <div class="divider"></div>
+
+      <div class="challenge-grid">
+        <div class="challenge-panel">
+          <div class="field">
+            <label class="label" for="sts-proof">Proof code</label>
+            <input class="input" id="sts-proof" name="proof" placeholder="STS-…" autocomplete="off" />
+            <p class="help">No hacking required: copy the unusual archive tag from the table.</p>
+          </div>
+          <div class="actions">
+            <button class="button" id="sts-claim" type="button">Claim flag</button>
+            <button class="button secondary" id="sts-reset" type="button">Reset</button>
+          </div>
+        </div>
+        <div class="challenge-panel">
+          <div class="output" id="sts-output" role="status" aria-live="polite">Waiting for proof…</div>
+          <div class="flag hidden" id="sts-flag" aria-label="Claimed flag"></div>
+          <p class="surface-note">The real flag is returned by the backend after proof validation.</p>
+        </div>
+      </div>
     `);
+
+    const input = document.getElementById('sts-proof');
+    const claimBtn = document.getElementById('sts-claim');
+    const resetBtn = document.getElementById('sts-reset');
+    const out = document.getElementById('sts-output');
+    const flagEl = document.getElementById('sts-flag');
+
+    function write(message, kind) {
+      out.classList.remove('ok', 'bad');
+      if (kind) out.classList.add(kind);
+      out.textContent = message;
+    }
+
+    function showFlag(flag) {
+      flagEl.textContent = flag;
+      flagEl.classList.remove('hidden');
+    }
+
+    function hideFlag() {
+      flagEl.textContent = '';
+      flagEl.classList.add('hidden');
+    }
+
+    claimBtn.addEventListener('click', () => {
+      const value = (input.value || '').trim();
+      if (!value) {
+        write('Paste the proof code first.', 'bad');
+        return;
+      }
+
+      hideFlag();
+
+      (async () => {
+        if (!ctx.launchToken) {
+          write('Missing launch token; cannot claim flag.', 'bad');
+          return;
+        }
+
+        write('Claiming flag…', 'ok');
+        try {
+          const flag = await claimFlag(ctx.launchToken, value);
+          write('Flag claimed. Copy and submit it on the main platform.', 'ok');
+          showFlag(flag);
+        } catch (e) {
+          const msg = (e && e.message) ? e.message : 'Unknown error';
+          write(`Claim failed: ${msg}`, 'bad');
+        }
+      })();
+    });
+
+    resetBtn.addEventListener('click', () => {
+      input.value = '';
+      write('Waiting for proof…');
+      hideFlag();
+      input.focus();
+    });
   }
 
   const CHALLENGES = Object.freeze({
