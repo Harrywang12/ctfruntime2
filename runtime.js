@@ -362,12 +362,6 @@
           return;
         }
 
-        const proof = deriveHex(seed, normalizeSlug(ctx.runtimeSlug));
-        console.log('DEBUG artifact_seed:', seed.slice(0, 16) + '...');
-        console.log('DEBUG normalized_slug:', normalizeSlug(ctx.runtimeSlug));
-        console.log('DEBUG derived_proof:', proof);
-        console.log('DEBUG will_submit:', value);
-
         write('Claiming flag…', 'ok');
         try {
           const flag = await claimFlag(ctx.launchToken, value);
@@ -501,12 +495,6 @@
           write('Missing launch token; cannot claim flag.', 'bad');
           return;
         }
-
-        const proof = deriveHex(seed, normalizeSlug(ctx.runtimeSlug));
-        console.log('DEBUG artifact_seed:', seed.slice(0, 16) + '...');
-        console.log('DEBUG normalized_slug:', normalizeSlug(ctx.runtimeSlug));
-        console.log('DEBUG derived_proof:', proof);
-        console.log('DEBUG will_submit:', value);
 
         write('Claiming flag…', 'ok');
         try {
