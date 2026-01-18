@@ -597,7 +597,7 @@
       const hash = simpleHash(seed, salt + i.toString());
       result += (hash & 0xffff).toString(16).padStart(4, '0');
     }
-    return result.slice(0, 16);
+    return result;
   }
 
   // ==========================================================================
