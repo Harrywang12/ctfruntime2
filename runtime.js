@@ -589,14 +589,15 @@
 
   /**
    * Generate a deterministic hex string from seed and salt.
+   * Matches backend deriveHex implementation.
    */
-  function deriveHex(seed, salt, length) {
+  function deriveHex(seed, salt) {
     let result = '';
-    for (let i = 0; i < length; i++) {
+    for (let i = 0; i < 8; i++) {
       const hash = simpleHash(seed, salt + i.toString());
-      result += (hash % 16).toString(16);
+      result += (hash & 0xffff).toString(16).padStart(4, '0');
     }
-    return result;
+    return result.slice(0, 16);
   }
 
   // ==========================================================================
