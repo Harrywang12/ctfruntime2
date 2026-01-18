@@ -264,7 +264,7 @@
     // Beginner-friendly “view source / inspect element” style challenge.
     // Dynamic flag: user finds a per-team proof code, then claims from backend.
     const seed = ctx.runtimeState.artifact_seed;
-    const proof = `HIPS-${deriveHex(seed, 'hips_proof', 12)}`;
+    const proof = deriveHex(seed, ctx.runtimeSlug, 16);
 
     setChallengeSurface(`
       ${renderChallengeHeader(
@@ -307,7 +307,7 @@
         <div class="challenge-panel">
           <div class="field">
             <label class="label" for="hips-proof">Proof code</label>
-            <input class="input" id="hips-proof" name="proof" placeholder="HIPS-…" autocomplete="off" />
+            <input class="input" id="hips-proof" name="proof" placeholder="16 hex characters" autocomplete="off" />
             <p class="help">Tip: Right-click → Inspect Element and look for hidden elements in the DOM.</p>
           </div>
           <div class="actions">
@@ -386,7 +386,7 @@
     // Purely logic-based: the proof code is present as an unusual note.
     // The real flag is claimed dynamically from the backend.
     const seed = ctx.runtimeState.artifact_seed;
-    const proof = `STS-${deriveHex(seed, 'sts_proof', 12)}`;
+    const proof = deriveHex(seed, ctx.runtimeSlug, 16);
 
     setChallengeSurface(`
       ${renderChallengeHeader(
@@ -443,7 +443,7 @@
         <div class="challenge-panel">
           <div class="field">
             <label class="label" for="sts-proof">Proof code</label>
-            <input class="input" id="sts-proof" name="proof" placeholder="STS-…" autocomplete="off" />
+            <input class="input" id="sts-proof" name="proof" placeholder="16 hex characters" autocomplete="off" />
             <p class="help">No hacking required: copy the unusual archive tag from the table.</p>
           </div>
           <div class="actions">
