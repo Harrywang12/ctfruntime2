@@ -308,7 +308,7 @@
           <div class="field">
             <label class="label" for="hips-proof">Proof code</label>
             <input class="input" id="hips-proof" name="proof" placeholder="HIPS-…" autocomplete="off" />
-            <p class="help">Tip: this proof is hidden in the page source/DOM (beginner-friendly).</p>
+            <p class="help">Tip: Right-click → Inspect Element and look for hidden elements in the DOM.</p>
           </div>
           <div class="actions">
             <button class="button" id="hips-claim" type="button">Claim flag</button>
@@ -322,7 +322,7 @@
         </div>
       </div>
 
-      <!-- PROOF (hidden in plain sight): ${proof} -->
+      <div class="hidden-proof" aria-hidden="true">PROOF: ${proof}</div>
     `);
 
     const input = document.getElementById('hips-proof');

@@ -541,6 +541,14 @@ body {
   display: none !important;
 }
 
+.hidden-proof {
+  display: none;
+  visibility: hidden;
+  opacity: 0;
+  font-size: 0;
+  color: transparent;
+}
+
 /* Responsive */
 @media (max-width: 520px) {
   .runtime-container {
