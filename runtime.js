@@ -260,11 +260,119 @@
     });
   }
 
+  function renderHiddenInPlainSightChallenge(ctx) {
+    // Static, beginner-friendly “view source / inspect element” style challenge.
+    // NOTE: This intentionally embeds a flag in the DOM (as requested).
+    // In production CTF flows, prefer server-side flag claiming.
+    const flag = 'SDG{hidden_in_plain_sight_protect_forests}';
+
+    setChallengeSurface(`
+      ${renderChallengeHeader(
+        ctx.runtimeSlug,
+        'Hidden in Plain Sight',
+        'A static SDG 15 page. The flag is hidden using a beginner-friendly method.'
+      )}
+
+      <div class="challenge-panel" role="region" aria-label="SDG 15 poster">
+        <div class="pill sdg-tag">SDG 15 • Life on Land</div>
+
+        <div class="sdg-poster">
+          <div class="sdg-poster-row">
+            <svg class="sdg-poster-icon" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+              <rect x="0" y="0" width="64" height="64" rx="12" fill="#2e7d32"></rect>
+              <path d="M32 12c-7 8-12 14-12 22 0 9 5 16 12 16s12-7 12-16c0-8-5-14-12-22z" fill="#c8e6c9"></path>
+              <rect x="29" y="36" width="6" height="16" rx="3" fill="#795548"></rect>
+              <path d="M18 50c8-6 20-6 28 0" stroke="#1b5e20" stroke-width="3" fill="none" stroke-linecap="round"></path>
+            </svg>
+            <div>
+              <h4 class="sdg-poster-title">Protect forests, protect life.</h4>
+              <p class="sdg-poster-text">
+                Forests store carbon, regulate water, prevent erosion, and provide habitat for countless species.
+                Sustainable forestry, restoring degraded land, and reducing illegal logging help keep ecosystems resilient.
+              </p>
+            </div>
+          </div>
+
+          <div class="divider sdg-poster-divider"></div>
+
+          <p class="sdg-poster-note">
+            Challenge: find the hidden flag on this page.
+          </p>
+        </div>
+      </div>
+
+      <!-- FLAG (hidden in plain sight): ${flag} -->
+    `);
+  }
+
+  function renderSaveTheSpeciesChallenge(ctx) {
+    // Purely logic-based: the flag is plainly present as an unusual note.
+    // No interactions, no exploitation.
+    const flag = 'SDG{save_the_species_read_the_table}';
+
+    setChallengeSurface(`
+      ${renderChallengeHeader(
+        ctx.runtimeSlug,
+        'Save the Species',
+        'A simple conservation status table. One row contains an unusual code that is the flag.'
+      )}
+
+      <table class="surface-table" aria-label="Animals and conservation statuses">
+        <thead>
+          <tr>
+            <th>Animal</th>
+            <th>Status</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Amur leopard</td>
+            <td>Critically Endangered</td>
+            <td>Habitat fragmentation and poaching pressure.</td>
+          </tr>
+          <tr>
+            <td>Sea otter</td>
+            <td>Endangered</td>
+            <td>Keystone species; sensitive to oil pollution.</td>
+          </tr>
+          <tr>
+            <td>Sumatran orangutan</td>
+            <td>Critically Endangered</td>
+            <td>Deforestation for agriculture reduces habitat.</td>
+          </tr>
+          <tr>
+            <td>Hawksbill turtle</td>
+            <td>Critically Endangered</td>
+            <td>Illegal trade; nesting sites under threat.</td>
+          </tr>
+          <tr>
+            <td>Axolotl</td>
+            <td>Critically Endangered</td>
+            <td>Unusual archive tag: <strong>${flag}</strong></td>
+          </tr>
+          <tr>
+            <td>Snow leopard</td>
+            <td>Vulnerable</td>
+            <td>Human-wildlife conflict; shrinking range.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p class="surface-note">
+        No hacking required: the flag is the unusual code/note in the table.
+      </p>
+    `);
+  }
+
   const CHALLENGES = Object.freeze({
     // Default module if slug is unknown
     demo: renderDemoChallenge,
     // Example template challenge
     'seeded-vault': renderSeededVaultChallenge,
+    // Static challenges
+    'hidden-in-plain-sight': renderHiddenInPlainSightChallenge,
+    'save-the-species': renderSaveTheSpeciesChallenge,
   });
 
   // ==========================================================================

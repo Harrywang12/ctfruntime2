@@ -430,6 +430,54 @@ body {
   user-select: all;
 }
 
+/* Static challenge helpers */
+.sdg-tag {
+  display: inline-block;
+  margin-bottom: 10px;
+}
+
+.sdg-poster {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 14px;
+}
+
+.sdg-poster-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.sdg-poster-icon {
+  width: 56px;
+  height: 56px;
+  flex: 0 0 auto;
+}
+
+.sdg-poster-title {
+  margin: 0 0 6px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.sdg-poster-text {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.sdg-poster-divider {
+  margin: 14px 0;
+}
+
+.sdg-poster-note {
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
 /* Error Panel */
 .error-panel {
   padding: 48px 24px;
