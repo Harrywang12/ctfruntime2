@@ -280,7 +280,7 @@
     (async () => {
       if (!ctx.launchToken) return;
       try {
-        const qs = new URLSearchParams({ token: ctx.launchToken });
+        const qs = new URLSearchParams({ seed: ctx.runtimeState.artifact_seed });
         const resp = await fetch(`/api/hidden-in-plain-sight?${qs.toString()}`, {
           method: 'GET',
           credentials: 'omit',
@@ -446,7 +446,7 @@
     (async () => {
       if (!ctx.launchToken) return;
       try {
-        const qs = new URLSearchParams({ token: ctx.launchToken });
+        const qs = new URLSearchParams({ seed: ctx.runtimeState.artifact_seed });
         const resp = await fetch(`/api/save-the-species?${qs.toString()}`, {
           method: 'GET',
           credentials: 'omit',
@@ -553,7 +553,7 @@
 
       write('Fetching telemetry…', 'ok');
       try {
-        const qs = new URLSearchParams({ token: ctx.launchToken, slug: ctx.runtimeSlug });
+        const qs = new URLSearchParams({ seed: ctx.runtimeState.artifact_seed, slug: ctx.runtimeSlug });
         const resp = await fetch(`/api/endangered-access?${qs.toString()}`, {
           method: 'GET',
           credentials: 'omit',
@@ -905,7 +905,7 @@
       };
 
       const qs = new URLSearchParams({
-        token: ctx.launchToken,
+        seed: ctx.runtimeState.artifact_seed,
         slug: ctx.runtimeSlug,
         filter: JSON.stringify(filter),
       });

@@ -50,12 +50,22 @@ async function redeemLaunchToken(token) {
 module.exports = async function handler(req, res) {
   try {
     const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+    const seed = url.searchParams.get('seed') || '';
     const token = url.searchParams.get('token') || '';
     const slug = url.searchParams.get('slug') || 'endangered-access';
-    if (!token) return json(res, 400, { error: 'Missing token' });
 
-    const runtimeState = await redeemLaunchToken(token);
-    const artifactSeed = runtimeState.artifact_seed;
+    let artifactSeed = '';
+    if (seed) {
+      artifactSeed = seed;
+    } else {
+      if (!token) return json(res, 400, { error: 'Missing token or seed' });
+      const runtimeState = await redeemLaunchToken(token);
+      artifactSeed = runtimeState.artifact_seed;
+    }
+
+    if (!/^[0-9a-f]{64}$/i.test(String(artifactSeed))) {
+      return json(res, 400, { error: 'Invalid seed format' });
+    }
 
     const proof = computeProof({ artifactSeed, runtimeSlug: slug });
 

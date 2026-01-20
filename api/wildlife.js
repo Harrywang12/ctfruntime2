@@ -152,19 +152,25 @@ function safeParseFilter(raw) {
 module.exports = async function handler(req, res) {
   try {
     const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+    const seed = url.searchParams.get('seed') || '';
     const token = url.searchParams.get('token') || '';
     const slug = url.searchParams.get('slug') || 'poacher-supply-chain';
 
-    if (!token) {
-      return json(res, 400, { error: 'Missing token' });
+    let artifactSeed = '';
+    if (seed) {
+      artifactSeed = seed;
+    } else {
+      if (!token) return json(res, 400, { error: 'Missing token or seed' });
+      // Redeem (fallback path) to get the per-team artifact_seed.
+      const runtimeState = await redeemLaunchToken(token);
+      artifactSeed = runtimeState.artifact_seed;
     }
 
-    // Redeem the launch token server-side to get the per-team artifact_seed.
-    // This reuses the same launch-token system as the runtime.
-    const runtimeState = await redeemLaunchToken(token);
-    const seed = runtimeState.artifact_seed;
+    if (!/^[0-9a-f]{64}$/i.test(String(artifactSeed))) {
+      return json(res, 400, { error: 'Invalid seed format' });
+    }
 
-    const dataset = makeDataset(seed, slug);
+    const dataset = makeDataset(artifactSeed, slug);
 
     // Intended policy:
     // - Only aggregated statistics should be exposed here.

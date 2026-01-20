@@ -78,11 +78,12 @@ function verifyTokenFlawed(token) {
 module.exports = async function handler(req, res) {
   try {
     const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+    const seed = url.searchParams.get('seed') || '';
     const token = url.searchParams.get('token') || '';
     const slug = url.searchParams.get('slug') || 'illegal-logging-network';
     const verificationToken = (url.searchParams.get('verificationToken') || '').trim();
 
-    if (!token) return json(res, 400, { error: 'Missing token' });
+    if (!seed && !token) return json(res, 400, { error: 'Missing token or seed' });
     if (!verificationToken) return json(res, 400, { error: 'Missing verificationToken' });
 
     const verdict = verifyTokenFlawed(verificationToken);
@@ -90,8 +91,17 @@ module.exports = async function handler(req, res) {
       return json(res, 403, { ok: false, error: verdict.error || 'Verification failed' });
     }
 
-    const runtimeState = await redeemLaunchToken(token);
-    const artifactSeed = runtimeState.artifact_seed;
+    let artifactSeed = '';
+    if (seed) {
+      artifactSeed = seed;
+    } else {
+      const runtimeState = await redeemLaunchToken(token);
+      artifactSeed = runtimeState.artifact_seed;
+    }
+
+    if (!/^[0-9a-f]{64}$/i.test(String(artifactSeed))) {
+      return json(res, 400, { error: 'Invalid seed format' });
+    }
 
     const proof = computeProof({ artifactSeed, runtimeSlug: slug });
 
