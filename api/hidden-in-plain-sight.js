@@ -42,7 +42,8 @@ async function redeemLaunchToken(token) {
 
 module.exports = async function handler(req, res) {
   try {
-    const token = typeof req.query.token === 'string' ? req.query.token : '';
+    const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+    const token = url.searchParams.get('token') || '';
     if (!token) return json(res, 400, { error: 'Missing token' });
 
     const runtimeState = await redeemLaunchToken(token);

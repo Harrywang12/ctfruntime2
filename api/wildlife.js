@@ -145,8 +145,9 @@ function safeParseFilter(raw) {
 
 module.exports = async function handler(req, res) {
   try {
-    const token = typeof req.query.token === 'string' ? req.query.token : '';
-    const slug = typeof req.query.slug === 'string' ? req.query.slug : 'poacher-supply-chain';
+    const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+    const token = url.searchParams.get('token') || '';
+    const slug = url.searchParams.get('slug') || 'poacher-supply-chain';
 
     if (!token) {
       return json(res, 400, { error: 'Missing token' });
@@ -166,15 +167,15 @@ module.exports = async function handler(req, res) {
     // Implemented (vulnerable) policy:
     // - We block direct ?caseId=...
     // - BUT we accidentally allow a case lookup when embedded in the JSON filter.
-    const directCaseId = typeof req.query.caseId === 'string' ? req.query.caseId.trim() : '';
+    const directCaseId = (url.searchParams.get('caseId') || '').trim();
     if (directCaseId) {
       return json(res, 403, { error: 'Direct case access is restricted. Use aggregated endpoints only.' });
     }
 
-    const filter = safeParseFilter(typeof req.query.filter === 'string' ? req.query.filter : '');
+    const filter = safeParseFilter(url.searchParams.get('filter') || '');
 
-    const regionParam = (typeof req.query.region === 'string' ? req.query.region : '').trim();
-    const speciesParam = (typeof req.query.species === 'string' ? req.query.species : '').trim();
+    const regionParam = (url.searchParams.get('region') || '').trim();
+    const speciesParam = (url.searchParams.get('species') || '').trim();
     const region = regionParam || (filter && typeof filter.region === 'string' ? filter.region.trim() : '');
     const species = speciesParam || (filter && typeof filter.species === 'string' ? filter.species.trim() : '');
 

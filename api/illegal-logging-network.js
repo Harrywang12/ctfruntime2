@@ -71,9 +71,10 @@ function verifyTokenFlawed(token) {
 
 module.exports = async function handler(req, res) {
   try {
-    const token = typeof req.query.token === 'string' ? req.query.token : '';
-    const slug = typeof req.query.slug === 'string' ? req.query.slug : 'illegal-logging-network';
-    const verificationToken = typeof req.query.verificationToken === 'string' ? req.query.verificationToken.trim() : '';
+    const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+    const token = url.searchParams.get('token') || '';
+    const slug = url.searchParams.get('slug') || 'illegal-logging-network';
+    const verificationToken = (url.searchParams.get('verificationToken') || '').trim();
 
     if (!token) return json(res, 400, { error: 'Missing token' });
     if (!verificationToken) return json(res, 400, { error: 'Missing verificationToken' });
