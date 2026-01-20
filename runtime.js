@@ -15,11 +15,14 @@
  * - This runtime has NO access to main-site authentication
  * - No cookies are sent or received (credentials: "omit")
  * - No Supabase keys are embedded; all auth is backend-side
- * - artifact_seed is used to derive challenge state, NOT to compute flags
+ * - artifact_seed is used to derive non-security challenge UI variations only
+ * - Proofs are derived server-side using a secret salt (PROOF_SECRET_SALT)
+ * - Flags are derived server-side using a separate secret salt (FLAG_SECRET_SALT)
+ * - Neither proofs nor flags can be computed client-side from artifact_seed
  * 
  * The actual vulnerable challenge surface should be built using artifact_seed
- * to create deterministic, per-team variations. The flag derivation happens
- * server-side only.
+ * to create deterministic, per-team UI variations. All security-critical validation
+ * (proof/flag derivation and verification) happens server-side only.
  */
 
 (function() {
@@ -37,9 +40,9 @@
 
   /**
    * Backend Edge Function URL for claiming a flag after a solve.
-   * The function must validate the provided proof server-side.
+    * The function must validate the provided proof server-side.
    */
-  const CLAIM_URL = 'https://vgwukffsjudbybdeuodn.supabase.co/functions/v1/claim-runtime-flag';
+    const CLAIM_URL = 'https://vgwukffsjudbybdeuodn.supabase.co/functions/v1/claim-runtime-flag';
 
   /**
    * Set to false in production to disable console logging of sensitive data.
@@ -109,12 +112,15 @@
   }
 
   function renderDemoChallenge(ctx) {
-    const seed = ctx.runtimeState.artifact_seed;
+    // NOTE: This demo intentionally avoids relying on artifact_seed.
+    // artifact_seed can be obtained by players (redeem endpoint), so any
+    // solve-critical material must be validated server-side.
+    const pseudoSeed = `${ctx.runtimeState.team_id}:${ctx.runtimeState.challenge_id}`;
 
-    const userId = simpleHash(seed, 'user_id') % 10000;
-    const userName = 'user_' + deriveHex(seed, 'username', 6);
-    const apiKey = deriveHex(seed, 'api_key', 16);
-    const recordCount = 10 + (simpleHash(seed, 'records') % 90);
+    const userId = simpleHash(pseudoSeed, 'user_id') % 10000;
+    const userName = 'user_' + deriveHex(pseudoSeed, 'username', 6);
+    const apiKey = deriveHex(pseudoSeed, 'api_key', 16);
+    const recordCount = 10 + (simpleHash(pseudoSeed, 'records') % 90);
 
     setChallengeSurface(`
       ${renderChallengeHeader(ctx.runtimeSlug, 'Demo: Seeded Environment', 'A deterministic environment derived from your team/challenge seed.')}
@@ -151,120 +157,10 @@
     `);
   }
 
-  function renderSeededVaultChallenge(ctx) {
-    // A safe, frontend-only "challenge" template: a deterministic vault that
-    // unlocks based on a derived phrase. No flag is computed or shown.
-    const seed = ctx.runtimeState.artifact_seed;
-
-    const vaultId = deriveHex(seed, 'vault_id', 8);
-    const hintWords = [
-      'ember', 'cobalt', 'atlas', 'lumen', 'nova', 'orchid', 'vertex', 'cipher',
-      'quartz', 'delta', 'aurora', 'kernel', 'saffron', 'zenith', 'anchor', 'ripple',
-    ];
-    const w1 = hintWords[simpleHash(seed, 'w1') % hintWords.length];
-    const w2 = hintWords[simpleHash(seed, 'w2') % hintWords.length];
-    const w3 = hintWords[simpleHash(seed, 'w3') % hintWords.length];
-    const expected = `${w1}-${w2}-${w3}-${vaultId.slice(0, 4)}`;
-
-    setChallengeSurface(`
-      ${renderChallengeHeader(ctx.runtimeSlug, 'Vault Access Terminal', 'Enter the access phrase to unlock the seeded vault (demo template).')}
-      <div class="challenge-grid">
-        <div class="challenge-panel">
-          <div class="field">
-            <label class="label" for="vault-phrase">Access phrase</label>
-            <input class="input" id="vault-phrase" name="phrase" placeholder="e.g. ember-cobalt-atlas-1a2b" autocomplete="off" />
-            <p class="help">Vault ID: <code>${escapeText(vaultId)}</code></p>
-            <p class="help">Hint: phrase is <code>${escapeText(w1)}-${escapeText(w2)}-${escapeText(w3)}-</code> + the first 4 hex chars of the Vault ID</p>
-          </div>
-          <div class="actions">
-            <button class="button" id="vault-submit" type="button">Check phrase</button>
-            <button class="button secondary" id="vault-reset" type="button">Reset</button>
-          </div>
-        </div>
-        <div class="challenge-panel">
-          <div class="output" id="vault-output" role="status" aria-live="polite">Waiting for input…</div>
-          <div class="flag hidden" id="vault-flag" aria-label="Claimed flag"></div>
-          <p class="surface-note">
-            Demo behavior only: unlocking shows a non-sensitive artifact preview.
-            Real challenges should verify flags server-side.
-          </p>
-        </div>
-      </div>
-    `);
-
-    const input = document.getElementById('vault-phrase');
-    const submit = document.getElementById('vault-submit');
-    const reset = document.getElementById('vault-reset');
-    const out = document.getElementById('vault-output');
-    const flagEl = document.getElementById('vault-flag');
-
-    function write(message, kind) {
-      out.classList.remove('ok', 'bad');
-      if (kind) out.classList.add(kind);
-      out.textContent = message;
-    }
-
-    function showFlag(flag) {
-      flagEl.textContent = flag;
-      flagEl.classList.remove('hidden');
-    }
-
-    function hideFlag() {
-      flagEl.textContent = '';
-      flagEl.classList.add('hidden');
-    }
-
-    submit.addEventListener('click', () => {
-      const value = (input.value || '').trim().toLowerCase();
-      if (!value) {
-        write('Enter a phrase first.', 'bad');
-        return;
-      }
-
-      if (value === expected) {
-        const artifactPreview = deriveHex(seed, 'artifact_preview', 24);
-        write(`Unlocked vault ${vaultId}. Artifact preview: ${artifactPreview}…`, 'ok');
-
-        // Claim the flag from the backend using a proof.
-        // proof = the solver output we want validated server-side.
-        hideFlag();
-
-        (async () => {
-          if (!ctx.launchToken) {
-            write('Solved locally, but missing launch token to claim flag.', 'bad');
-            return;
-          }
-
-          write('Solved. Claiming flag…', 'ok');
-          try {
-            const flag = await claimFlag(ctx.launchToken, value);
-            write('Flag claimed. Copy and submit it on the main platform.', 'ok');
-            showFlag(flag);
-          } catch (e) {
-            const msg = (e && e.message) ? e.message : 'Unknown error';
-            write(`Solved locally, but flag claim failed: ${msg}`, 'bad');
-          }
-        })();
-
-        return;
-      }
-
-      write('Access denied. Phrase incorrect.', 'bad');
-    });
-
-    reset.addEventListener('click', () => {
-      input.value = '';
-      write('Waiting for input…');
-      hideFlag();
-      input.focus();
-    });
-  }
-
   function renderHiddenInPlainSightChallenge(ctx) {
     // Beginner-friendly “view source / inspect element” style challenge.
     // Dynamic flag: user finds a per-team proof code, then claims from backend.
-    const seed = ctx.runtimeState.artifact_seed;
-    const proof = deriveHex(seed, ctx.runtimeSlug, 16);
+    let proof = null;
 
     setChallengeSurface(`
       ${renderChallengeHeader(
@@ -322,7 +218,7 @@
         </div>
       </div>
 
-      <div class="hidden-proof" aria-hidden="true">PROOF: ${proof}</div>
+      <div class="hidden-proof" id="hips-hidden" aria-hidden="true">PROOF: (loading)</div>
     `);
 
     const input = document.getElementById('hips-proof');
@@ -364,7 +260,7 @@
 
         write('Claiming flag…', 'ok');
         try {
-          const flag = await claimFlag(ctx.launchToken, value);
+          const flag = await claimFlag(ctx.launchToken, value, ctx.runtimeSlug);
           write('Flag claimed. Copy and submit it on the main platform.', 'ok');
           showFlag(flag);
         } catch (e) {
@@ -380,13 +276,33 @@
       hideFlag();
       input.focus();
     });
+
+    (async () => {
+      if (!ctx.launchToken) return;
+      try {
+        const qs = new URLSearchParams({ token: ctx.launchToken });
+        const resp = await fetch(`/api/hidden-in-plain-sight?${qs.toString()}`, {
+          method: 'GET',
+          credentials: 'omit',
+          cache: 'no-store',
+        });
+        const data = await resp.json().catch(() => null);
+        if (!resp.ok) return;
+        if (data && typeof data.proof === 'string') {
+          proof = data.proof.trim();
+          const hidden = document.getElementById('hips-hidden');
+          if (hidden) hidden.textContent = `PROOF: ${proof}`;
+        }
+      } catch {
+        // Ignore; the solve still works if the proof loads late.
+      }
+    })();
   }
 
   function renderSaveTheSpeciesChallenge(ctx) {
     // Purely logic-based: the proof code is present as an unusual note.
     // The real flag is claimed dynamically from the backend.
-    const seed = ctx.runtimeState.artifact_seed;
-    const proof = deriveHex(seed, ctx.runtimeSlug, 16);
+    let proof = null;
 
     setChallengeSurface(`
       ${renderChallengeHeader(
@@ -427,7 +343,7 @@
           <tr>
             <td>Axolotl</td>
             <td>Critically Endangered</td>
-            <td>Unusual archive tag: <strong>${proof}</strong></td>
+            <td>Unusual archive tag: <strong id="sts-archive">(loading)</strong></td>
           </tr>
           <tr>
             <td>Snow leopard</td>
@@ -498,7 +414,7 @@
 
         write('Claiming flag…', 'ok');
         try {
-          const flag = await claimFlag(ctx.launchToken, value);
+          const flag = await claimFlag(ctx.launchToken, value, ctx.runtimeSlug);
           write('Flag claimed. Copy and submit it on the main platform.', 'ok');
           showFlag(flag);
         } catch (e) {
@@ -514,16 +430,594 @@
       hideFlag();
       input.focus();
     });
+
+    (async () => {
+      if (!ctx.launchToken) return;
+      try {
+        const qs = new URLSearchParams({ token: ctx.launchToken });
+        const resp = await fetch(`/api/save-the-species?${qs.toString()}`, {
+          method: 'GET',
+          credentials: 'omit',
+          cache: 'no-store',
+        });
+        const data = await resp.json().catch(() => null);
+        if (!resp.ok) return;
+        if (data && typeof data.proof === 'string') {
+          proof = data.proof.trim();
+          const cell = document.getElementById('sts-archive');
+          if (cell) cell.textContent = proof;
+        }
+      } catch {
+        // Ignore
+      }
+    })();
+  }
+
+  function renderEndangeredAccessChallenge(ctx) {
+    let proof = null;
+    const params = new URLSearchParams(window.location.search);
+    const hasBypassParam = params.get('access') === 'letmein';
+
+    setChallengeSurface(`
+      ${renderChallengeHeader(
+        ctx.runtimeSlug,
+        'Endangered Access',
+        'Public conservation page with a fake client-side restriction gate.'
+      )}
+
+      <div class="challenge-panel">
+        <p class="help">Public brief:</p>
+        <p class="sdg-poster-text">We monitor key habitats, track illegal logging signals, and publish open data.</p>
+        <p class="sdg-poster-text">Certain telemetry is <strong>restricted</strong>, but this gate is only enforced client-side.</p>
+      </div>
+
+      <div class="challenge-panel" id="ea-guard">
+        <div id="ea-locked" class="${hasBypassParam ? 'hidden' : ''}">
+          <p class="surface-note">Restricted telemetry requires reviewer approval.</p>
+          <p class="help">Hint: client-only gate — inspect JS, try a URL param <code>?access=letmein</code>, or flip <code>window.overrideAccess = true</code> in console.</p>
+          <div class="actions">
+            <button class="button secondary" id="ea-try">Run client check</button>
+          </div>
+        </div>
+        <div id="ea-unlocked" class="${hasBypassParam ? '' : 'hidden'}">
+          <p class="surface-note">Restricted telemetry (client-side only gate):</p>
+          <p class="sdg-poster-text">Site hash: <strong id="ea-sitehash">(fetch telemetry)</strong></p>
+          <div class="actions">
+            <button class="button secondary" id="ea-telemetry">Fetch telemetry</button>
+            <button class="button" id="ea-claim">Claim flag</button>
+          </div>
+          <div class="output" id="ea-output" role="status" aria-live="polite">Ready to claim…</div>
+          <div class="flag hidden" id="ea-flag" aria-label="Claimed flag"></div>
+        </div>
+      </div>
+    `);
+
+    const locked = document.getElementById('ea-locked');
+    const unlocked = document.getElementById('ea-unlocked');
+    const tryBtn = document.getElementById('ea-try');
+    const telemetryBtn = document.getElementById('ea-telemetry');
+    const claimBtn = document.getElementById('ea-claim');
+    const out = document.getElementById('ea-output');
+    const flagEl = document.getElementById('ea-flag');
+    const siteHashEl = document.getElementById('ea-sitehash');
+
+    function gateIsOpen() {
+      return hasBypassParam || window.overrideAccess === true;
+    }
+
+    function openGate() {
+      locked.classList.add('hidden');
+      unlocked.classList.remove('hidden');
+    }
+
+    function write(message, kind) {
+      out.classList.remove('ok', 'bad');
+      if (kind) out.classList.add(kind);
+      out.textContent = message;
+    }
+
+    function showFlag(flag) {
+      flagEl.textContent = flag;
+      flagEl.classList.remove('hidden');
+    }
+
+    async function fetchTelemetry() {
+      if (!ctx.launchToken) {
+        write('Missing launch token; cannot fetch telemetry.', 'bad');
+        return;
+      }
+
+      write('Fetching telemetry…', 'ok');
+      try {
+        const qs = new URLSearchParams({ token: ctx.launchToken, slug: ctx.runtimeSlug });
+        const resp = await fetch(`/api/endangered-access?${qs.toString()}`, {
+          method: 'GET',
+          credentials: 'omit',
+          cache: 'no-store',
+        });
+        const data = await resp.json().catch(() => null);
+        if (!resp.ok) {
+          const msg = data?.error || data?.message || `HTTP ${resp.status}`;
+          write(`Telemetry error: ${msg}`, 'bad');
+          return;
+        }
+
+        const siteHash = data?.telemetry?.site_hash;
+        if (typeof siteHash === 'string' && siteHash.trim()) {
+          proof = siteHash.trim();
+          if (siteHashEl) siteHashEl.textContent = proof;
+          write('Telemetry loaded. You can now claim the flag.', 'ok');
+        } else {
+          write('Telemetry loaded, but no proof found.', 'bad');
+        }
+      } catch (e) {
+        const msg = (e && e.message) ? e.message : 'Unknown error';
+        write(`Telemetry error: ${msg}`, 'bad');
+      }
+    }
+
+    if (gateIsOpen()) openGate();
+
+    tryBtn?.addEventListener('click', () => {
+      if (gateIsOpen()) {
+        openGate();
+      } else {
+        write('Client-side gate still locked. Try console overrides or URL param.', 'bad');
+      }
+    });
+
+    telemetryBtn?.addEventListener('click', () => {
+      if (!gateIsOpen()) {
+        write('Gate not bypassed.', 'bad');
+        return;
+      }
+      fetchTelemetry();
+    });
+
+    claimBtn?.addEventListener('click', () => {
+      if (!gateIsOpen()) {
+        write('Gate not bypassed.', 'bad');
+        return;
+      }
+      if (!proof) {
+        write('Fetch telemetry first to obtain the proof.', 'bad');
+        return;
+      }
+      if (!ctx.launchToken) {
+        write('Missing launch token; cannot claim flag.', 'bad');
+        return;
+      }
+      write('Claiming flag…', 'ok');
+      (async () => {
+        try {
+          const flag = await claimFlag(ctx.launchToken, proof, ctx.runtimeSlug);
+          write('Flag claimed. Copy and submit it on the main platform.', 'ok');
+          showFlag(flag);
+        } catch (e) {
+          const msg = (e && e.message) ? e.message : 'Unknown error';
+          write(`Claim failed: ${msg}`, 'bad');
+        }
+      })();
+    });
+  }
+
+  function renderIllegalLoggingNetworkChallenge(ctx) {
+    let proof = null;
+
+    setChallengeSurface(`
+      ${renderChallengeHeader(
+        ctx.runtimeSlug,
+        'Illegal Logging Network',
+        'Simulated SDG 15 compliance dashboard with a flawed verification token check.'
+      )}
+
+      <div class="challenge-panel">
+        <p class="surface-note">Compliance Officer View (mocked)</p>
+        <p class="sdg-poster-text">Permit uploads and satellite pings are "verified" by a weak token check. No real secrets here.</p>
+        <ul class="sdg-poster-text" style="margin-left: 16px; list-style: disc;">
+          <li>Enter any token starting with <code>VER-</code></li>
+          <li>Checker only inspects a small suffix — can be brute-forced or read from the client.</li>
+        </ul>
+      </div>
+
+      <div class="challenge-grid">
+        <div class="challenge-panel">
+          <div class="field">
+            <label class="label" for="iln-token">Verification token</label>
+            <input class="input" id="iln-token" name="token" placeholder="VER-xxxxx" autocomplete="off" />
+            <p class="help">Hint: legacy verifier. Inspect the JS for how the signature is checked.</p>
+          </div>
+          <div class="actions">
+            <button class="button" id="iln-verify" type="button">Verify</button>
+            <button class="button secondary" id="iln-reset" type="button">Reset</button>
+          </div>
+        </div>
+        <div class="challenge-panel">
+          <div class="output" id="iln-output" role="status" aria-live="polite">Waiting for token…</div>
+          <div class="flag hidden" id="iln-flag" aria-label="Claimed flag"></div>
+          <p class="surface-note">Real flag is claimed from backend after this flawed check.</p>
+        </div>
+      </div>
+    `);
+
+    const input = document.getElementById('iln-token');
+    const verifyBtn = document.getElementById('iln-verify');
+    const resetBtn = document.getElementById('iln-reset');
+    const out = document.getElementById('iln-output');
+    const flagEl = document.getElementById('iln-flag');
+
+    function write(message, kind) {
+      out.classList.remove('ok', 'bad');
+      if (kind) out.classList.add(kind);
+      out.textContent = message;
+    }
+
+    function showFlag(flag) {
+      flagEl.textContent = flag;
+      flagEl.classList.remove('hidden');
+    }
+
+    function hideFlag() {
+      flagEl.textContent = '';
+      flagEl.classList.add('hidden');
+    }
+
+    async function sha256Hex(text) {
+      const enc = new TextEncoder();
+      const bytes = enc.encode(String(text));
+      const digest = await crypto.subtle.digest('SHA-256', bytes);
+      return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    verifyBtn?.addEventListener('click', () => {
+      const token = (input.value || '').trim();
+      hideFlag();
+
+      if (!token.startsWith('VER-')) {
+        write('Token must start with VER-', 'bad');
+        return;
+      }
+
+      (async () => {
+        // Token format: VER-<permitId>-<sig>
+        // Intended: sig == sha256(permitId).slice(0, 8)
+        // Bug: only checks the first 2 hex chars.
+        const parts = token.split('-');
+        if (parts.length < 3) {
+          write('Malformed token. Expected VER-<permitId>-<sig>', 'bad');
+          return;
+        }
+        const permitId = parts.slice(1, -1).join('-');
+        const sig = parts[parts.length - 1] || '';
+        if (!permitId) {
+          write('Malformed token: missing permitId.', 'bad');
+          return;
+        }
+
+        try {
+          const expected = (await sha256Hex(permitId)).slice(0, 8);
+          const ok = sig.toLowerCase().startsWith(expected.slice(0, 2));
+          if (!ok) {
+            write('Verification failed.', 'bad');
+            return;
+          }
+        } catch (e) {
+          const msg = (e && e.message) ? e.message : 'Unknown error';
+          write(`Local verifier error: ${msg}`, 'bad');
+          return;
+        }
+
+        if (!ctx.launchToken) {
+          write('Missing launch token; cannot verify/claim.', 'bad');
+          return;
+        }
+
+        write('Verification passed. Requesting proof…', 'ok');
+
+        try {
+          const qs = new URLSearchParams({
+            token: ctx.launchToken,
+            slug: ctx.runtimeSlug,
+            verificationToken: token,
+          });
+          const resp = await fetch(`/api/illegal-logging-network?${qs.toString()}`, {
+            method: 'GET',
+            credentials: 'omit',
+            cache: 'no-store',
+          });
+          const data = await resp.json().catch(() => null);
+          if (!resp.ok) {
+            const msg = data?.error || data?.message || `HTTP ${resp.status}`;
+            write(`Verification service denied: ${msg}`, 'bad');
+            return;
+          }
+
+          const p = data && typeof data.proof === 'string' ? data.proof.trim() : '';
+          if (!p) {
+            write('Verification passed, but no proof returned.', 'bad');
+            return;
+          }
+          proof = p;
+
+          write('Proof issued. Claiming flag…', 'ok');
+          const flag = await claimFlag(ctx.launchToken, proof, ctx.runtimeSlug);
+          write('Flag claimed. Copy and submit it on the main platform.', 'ok');
+          showFlag(flag);
+        } catch (e) {
+          const msg = (e && e.message) ? e.message : 'Unknown error';
+          write(`Claim failed: ${msg}`, 'bad');
+        }
+      })();
+    });
+
+    resetBtn?.addEventListener('click', () => {
+      input.value = '';
+      hideFlag();
+      write('Waiting for token…');
+    });
+  }
+
+  function renderPoacherSupplyChainChallenge(ctx) {
+    setChallengeSurface(`
+      ${renderChallengeHeader(
+        ctx.runtimeSlug,
+        'Wildlife Protection Logistics',
+        'Public SDG 15 dashboard backed by an internal API that should only expose aggregated statistics.'
+      )}
+
+      <div class="challenge-panel">
+        <p class="surface-note">Transparency Portal (public-facing)</p>
+        <p class="sdg-poster-text">
+          This dashboard tracks confiscations linked to illegal wildlife trade.
+          The site claims it only exposes aggregated data, but enforcement failures are often hidden in “internal” records.
+        </p>
+        <p class="help">Tip: Watch the Network tab while using filters.</p>
+      </div>
+
+      <div class="challenge-grid">
+        <div class="challenge-panel">
+          <div class="field">
+            <label class="label" for="psc-region">Region</label>
+            <select class="input" id="psc-region">
+              <option value="">All regions</option>
+              <option>Amazon Basin</option>
+              <option>Congo Basin</option>
+              <option>Southeast Asia</option>
+              <option>Himalayas</option>
+              <option>East Africa</option>
+              <option>Madagascar</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label class="label" for="psc-species">Species</label>
+            <select class="input" id="psc-species">
+              <option value="">All species</option>
+              <option>Pangolin</option>
+              <option>Elephant</option>
+              <option>Tiger</option>
+              <option>Rhino</option>
+              <option>Parrot</option>
+              <option>Orchid</option>
+            </select>
+          </div>
+
+          <div class="actions">
+            <button class="button" id="psc-refresh" type="button">Refresh dashboard</button>
+            <button class="button secondary" id="psc-clear" type="button">Clear</button>
+          </div>
+
+          <div class="divider"></div>
+
+          <p class="surface-note">Case access (restricted)</p>
+          <div class="field">
+            <label class="label" for="psc-caseid">Case ID</label>
+            <input class="input" id="psc-caseid" placeholder="WPT-XXXXXXXX" autocomplete="off" />
+            <p class="help">Direct case route is restricted. Try it and observe the response.</p>
+          </div>
+          <div class="actions">
+            <button class="button secondary" id="psc-direct" type="button">Fetch via /api/cases/:id</button>
+          </div>
+        </div>
+
+        <div class="challenge-panel">
+          <div class="output" id="psc-output" role="status" aria-live="polite">Loading dashboard…</div>
+          <div class="divider"></div>
+          <div class="field">
+            <label class="label" for="psc-proof">Proof code</label>
+            <input class="input" id="psc-proof" name="proof" placeholder="32 hex characters" autocomplete="off" />
+            <p class="help">If you retrieve an internal record, it may contain a proof value.</p>
+          </div>
+          <div class="actions">
+            <button class="button" id="psc-claim" type="button">Claim flag</button>
+          </div>
+          <div class="flag hidden" id="psc-flag" aria-label="Claimed flag"></div>
+        </div>
+      </div>
+
+      <div class="challenge-panel">
+        <p class="surface-note">Raw API response (for debugging)</p>
+        <pre class="code-block" id="psc-raw">(no data yet)</pre>
+      </div>
+    `);
+
+    const regionEl = document.getElementById('psc-region');
+    const speciesEl = document.getElementById('psc-species');
+    const refreshBtn = document.getElementById('psc-refresh');
+    const clearBtn = document.getElementById('psc-clear');
+    const directBtn = document.getElementById('psc-direct');
+    const caseIdEl = document.getElementById('psc-caseid');
+    const out = document.getElementById('psc-output');
+    const raw = document.getElementById('psc-raw');
+    const proofEl = document.getElementById('psc-proof');
+    const claimBtn = document.getElementById('psc-claim');
+    const flagEl = document.getElementById('psc-flag');
+
+    function write(message, kind) {
+      out.classList.remove('ok', 'bad');
+      if (kind) out.classList.add(kind);
+      out.textContent = message;
+    }
+
+    function showFlag(flag) {
+      flagEl.textContent = flag;
+      flagEl.classList.remove('hidden');
+    }
+
+    function hideFlag() {
+      flagEl.textContent = '';
+      flagEl.classList.add('hidden');
+    }
+
+    async function fetchAggregated() {
+      if (!ctx.launchToken) {
+        write('Missing launch token; cannot load dashboard.', 'bad');
+        return;
+      }
+
+      const filter = {
+        region: (regionEl.value || '').trim() || null,
+        species: (speciesEl.value || '').trim() || null,
+      };
+
+      const qs = new URLSearchParams({
+        token: ctx.launchToken,
+        slug: ctx.runtimeSlug,
+        filter: JSON.stringify(filter),
+      });
+
+      write('Fetching aggregated statistics…', 'ok');
+      hideFlag();
+      try {
+        const resp = await fetch(`/api/wildlife?${qs.toString()}`, {
+          method: 'GET',
+          credentials: 'omit',
+          cache: 'no-store',
+        });
+        const data = await resp.json().catch(() => null);
+
+        raw.textContent = JSON.stringify(data, null, 2);
+
+        if (!resp.ok) {
+          const msg = data?.error || data?.message || `HTTP ${resp.status}`;
+          write(`Dashboard error: ${msg}`, 'bad');
+          return;
+        }
+
+        const totals = data && data.totals ? data.totals : null;
+        const featured = data && data.featured_case ? data.featured_case : null;
+
+        const lines = [];
+        if (totals) {
+          lines.push(`Total seizures: ${totals.totalSeizures}`);
+          lines.push(`Regions affected: ${totals.regionsAffected}`);
+          lines.push(`Species protected: ${totals.speciesProtected}`);
+        }
+        if (featured && featured.caseId) {
+          lines.push('---');
+          lines.push(`Featured case: ${featured.caseId}`);
+          lines.push(`${featured.region} • ${featured.species}`);
+        }
+        if (data && data.case_detail) {
+          lines.push('---');
+          lines.push('Case detail returned by API. Review raw response.');
+        }
+
+        write(lines.length ? lines.join('\n') : 'No data returned.', 'ok');
+
+        // Autofill a plausible caseId to encourage exploration.
+        if (featured && featured.caseId && !caseIdEl.value) {
+          caseIdEl.value = featured.caseId;
+        }
+      } catch (e) {
+        const msg = (e && e.message) ? e.message : 'Unknown error';
+        write(`Dashboard error: ${msg}`, 'bad');
+      }
+    }
+
+    async function fetchDirectCase() {
+      const caseId = (caseIdEl.value || '').trim();
+      if (!caseId) {
+        write('Enter a case ID first.', 'bad');
+        return;
+      }
+      write('Fetching via direct case route…', 'ok');
+
+      try {
+        const resp = await fetch(`/api/cases/${encodeURIComponent(caseId)}`, {
+          method: 'GET',
+          credentials: 'omit',
+          cache: 'no-store',
+        });
+        const data = await resp.json().catch(() => null);
+        raw.textContent = JSON.stringify(data, null, 2);
+
+        const msg = data?.error || data?.message || `HTTP ${resp.status}`;
+        if (!resp.ok) {
+          write(`Direct route blocked: ${msg}`, 'bad');
+          return;
+        }
+        write('Unexpected: direct route returned data.', 'ok');
+      } catch (e) {
+        const msg = (e && e.message) ? e.message : 'Unknown error';
+        write(`Direct route error: ${msg}`, 'bad');
+      }
+    }
+
+    refreshBtn?.addEventListener('click', fetchAggregated);
+    clearBtn?.addEventListener('click', () => {
+      regionEl.value = '';
+      speciesEl.value = '';
+      caseIdEl.value = '';
+      proofEl.value = '';
+      raw.textContent = '(no data yet)';
+      hideFlag();
+      write('Cleared. Refresh dashboard to fetch again.');
+    });
+    directBtn?.addEventListener('click', fetchDirectCase);
+
+    claimBtn?.addEventListener('click', () => {
+      const value = (proofEl.value || '').trim();
+      if (!value) {
+        write('Paste the proof code first.', 'bad');
+        return;
+      }
+
+      hideFlag();
+      (async () => {
+        if (!ctx.launchToken) {
+          write('Missing launch token; cannot claim flag.', 'bad');
+          return;
+        }
+
+        write('Claiming flag…', 'ok');
+        try {
+          const flag = await claimFlag(ctx.launchToken, value, ctx.runtimeSlug);
+          write('Flag claimed. Copy and submit it on the main platform.', 'ok');
+          showFlag(flag);
+        } catch (e) {
+          const msg = (e && e.message) ? e.message : 'Unknown error';
+          write(`Claim failed: ${msg}`, 'bad');
+        }
+      })();
+    });
+
+    // Pre-fill for local sanity (not used as a solve path).
+    // This is NOT the proof; it just helps keep the UI consistent with other challenges.
+    if (!proofEl.value) proofEl.placeholder = '32 hex characters';
+
+    fetchAggregated();
   }
 
   const CHALLENGES = Object.freeze({
     // Default module if slug is unknown
     demo: renderDemoChallenge,
-    // Example template challenge
-    'seeded-vault': renderSeededVaultChallenge,
     // Static challenges
     'hidden-in-plain-sight': renderHiddenInPlainSightChallenge,
     'save-the-species': renderSaveTheSpeciesChallenge,
+    'endangered-access': renderEndangeredAccessChallenge,
+    'illegal-logging-network': renderIllegalLoggingNetworkChallenge,
+    'poacher-supply-chain': renderPoacherSupplyChainChallenge,
   });
 
   // ==========================================================================
@@ -719,14 +1213,19 @@
    * - Body: { token, proof }
    * - Response: { flag: "SDG{...}" } (or compatible)
    */
-  async function claimFlag(token, proof) {
+  async function claimFlag(token, proof, slug) {
+    const resolvedSlug = normalizeSlug(
+      slug || (parseRoute() && parseRoute().runtimeSlug) || ''
+    );
+
     const response = await fetch(CLAIM_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        // Keep compatibility with existing claim-runtime-flag deployments.
         'Authorization': `Bearer ${token}`,
       },
-      body: JSON.stringify({ token, proof }),
+      body: JSON.stringify({ token, proof, slug: resolvedSlug }),
       credentials: 'omit',
       cache: 'no-store',
     });
@@ -848,7 +1347,6 @@
         contest_id: runtimeState.contest_id,
         challenge_id: runtimeState.challenge_id,
         team_id: runtimeState.team_id,
-        artifact_seed: runtimeState.artifact_seed,
       });
 
       // Show success UI
