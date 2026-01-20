@@ -26,66 +26,110 @@
   <link rel="stylesheet" href="/runtime.css">
 </head>
 <body>
-  <main class="runtime-container">
-    <div class="runtime-card">
-      <header class="runtime-header">
-        <div class="logo">
-          <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-            <polyline points="2 17 12 22 22 17"></polyline>
-            <polyline points="2 12 12 17 22 12"></polyline>
-          </svg>
-          <span class="logo-text">SDG CTF</span>
-        </div>
-        <span class="runtime-badge">Challenge Runtime</span>
-      </header>
+  <div class="bg-grid" aria-hidden="true"></div>
+  <div class="bg-scanlines" aria-hidden="true"></div>
 
-      <div id="status-panel" class="status-panel">
-        <div class="status-icon" id="status-icon">
-          <div class="spinner"></div>
+  <main class="shell" aria-label="Challenge runtime">
+    <header class="topbar" role="banner">
+      <div class="brand">
+        <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter" aria-hidden="true" focusable="false">
+          <path d="M4 7l8-4 8 4-8 4-8-4z"></path>
+          <path d="M4 17l8 4 8-4"></path>
+          <path d="M4 12l8 4 8-4"></path>
+        </svg>
+        <div class="brand-text">
+          <div class="brand-title">SDG CTF</div>
+          <div class="brand-sub">Challenge Runtime • Isolated Surface</div>
         </div>
-        <p class="status-text" id="status-text">Initializing...</p>
       </div>
 
-      <div id="runtime-info" class="runtime-info hidden">
-        <h2 class="info-title">Runtime Initialized</h2>
-        <dl class="info-list">
-          <div class="info-item">
-            <dt>Contest</dt>
-            <dd id="info-contest">—</dd>
+      <div class="topbar-right">
+        <div class="chip" aria-label="Runtime mode">MODE: RUNTIME</div>
+        <div class="chip chip-accent" aria-label="Security posture">COOKIES: OFF • AUTH: OFF</div>
+      </div>
+    </header>
+
+    <section class="grid" aria-label="Runtime layout">
+      <aside class="panel sidebar" aria-label="Runtime metadata">
+        <div class="panel-header">
+          <div class="panel-title">SESSION</div>
+          <div class="panel-kicker">deterministic • sandboxed</div>
+        </div>
+
+        <div class="meta">
+          <div class="meta-row">
+            <div class="meta-key">CONTEST</div>
+            <div class="meta-val" id="info-contest">—</div>
           </div>
-          <div class="info-item">
-            <dt>Challenge</dt>
-            <dd id="info-challenge">—</dd>
+          <div class="meta-row">
+            <div class="meta-key">CHALLENGE</div>
+            <div class="meta-val" id="info-challenge">—</div>
           </div>
-          <div class="info-item">
-            <dt>Team</dt>
-            <dd id="info-team">—</dd>
+          <div class="meta-row">
+            <div class="meta-key">TEAM</div>
+            <div class="meta-val" id="info-team">—</div>
           </div>
-        </dl>
+        </div>
+
         <div class="divider"></div>
-        <div id="challenge-surface" class="challenge-surface">
-          <!-- Vulnerable challenge surface will be rendered here -->
-        </div>
-      </div>
 
-      <div id="error-panel" class="error-panel hidden">
-        <div class="error-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"></circle>
-            <line x1="12" y1="8" x2="12" y2="12"></line>
-            <line x1="12" y1="16" x2="12.01" y2="16"></line>
-          </svg>
+        <div class="panel-note">
+          <div class="panel-note-title">OPSEC</div>
+          <p>
+            This environment is intentionally vulnerable. Use browser tools, think about trust boundaries,
+            and look for mismatches between what the UI promises and what the network actually returns.
+          </p>
         </div>
-        <h2 class="error-title" id="error-title">Error</h2>
-        <p class="error-message" id="error-message"></p>
-        <p class="error-hint">Please launch this challenge from the main contest site.</p>
-      </div>
 
-      <footer class="runtime-footer">
-        <p>Isolated challenge environment • No cookies • No auth</p>
-      </footer>
-    </div>
+        <div class="divider"></div>
+
+        <div class="panel-note">
+          <div class="panel-note-title">HINT STYLE</div>
+          <p>
+            Hints point to a direction, not a solution. If a hint feels too specific, you’re probably meant
+            to verify it with observation.
+          </p>
+        </div>
+      </aside>
+
+      <section class="panel main" aria-label="Challenge surface">
+        <div class="panel-header">
+          <div class="panel-title">SURFACE</div>
+          <div class="panel-kicker">rendered client-side • validated server-side</div>
+        </div>
+
+        <div id="status-panel" class="status-panel" role="status" aria-live="polite">
+          <div class="status-icon" id="status-icon"><div class="spinner"></div></div>
+          <div class="status-stack">
+            <div class="status-text" id="status-text">Initializing…</div>
+            <div class="status-sub">Booting sandbox components</div>
+          </div>
+        </div>
+
+        <div id="runtime-info" class="runtime-info hidden">
+          <div id="challenge-surface" class="challenge-surface" aria-label="Vulnerable challenge surface">
+            <!-- Vulnerable challenge surface will be rendered here -->
+          </div>
+        </div>
+
+        <div id="error-panel" class="error-panel hidden" role="alert">
+          <div class="error-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter">
+              <path d="M12 2l10 10-10 10L2 12 12 2z"></path>
+              <path d="M12 7v6"></path>
+              <path d="M12 16h.01"></path>
+            </svg>
+          </div>
+          <h2 class="error-title" id="error-title">Error</h2>
+          <p class="error-message" id="error-message"></p>
+          <p class="error-hint">Launch this challenge from the main contest site.</p>
+        </div>
+
+        <footer class="runtime-footer">
+          <p>Isolated challenge environment • No cookies • No auth • Strict CSP</p>
+        </footer>
+      </section>
+    </section>
   </main>
 
   <script type="module" src="/runtime.js"></script>
