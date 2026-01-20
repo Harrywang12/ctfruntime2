@@ -32,7 +32,7 @@ function hmacHex(secret, message) {
 
 function computeProof({ artifactSeed, runtimeSlug }) {
   const secret = getProofSecret();
-  const msg = `proof:v2:${artifactSeed}:${runtimeSlug}`;
+  const msg = `proof.v2.${artifactSeed}.${runtimeSlug}`;
   return hmacHex(secret, msg).slice(0, 32);
 }
 
