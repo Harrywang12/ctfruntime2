@@ -1,5 +1,7 @@
 // Vercel Serverless Function
-// Returns the per-team proof for Save the Species.
+// Save the Species: returns an exportable report.
+// The per-team proof is intentionally placed in response metadata (header)
+// rather than directly rendered in the UI.
 
 const { computeProof } = require('./_runtimeCrypto');
 
@@ -66,7 +68,53 @@ module.exports = async function handler(req, res) {
     }
 
     const proof = computeProof({ artifactSeed, runtimeSlug: 'save-the-species' });
-    return json(res, 200, { ok: true, proof });
+
+    // Intentionally expose the proof via metadata, not the JSON body.
+    res.setHeader('X-Archive-Tag', proof);
+
+    const report = {
+      generated_at: new Date().toISOString(),
+      source: 'SDG15 Field Registry',
+      format: 'v1',
+      items: [
+        {
+          animal: 'Amur leopard',
+          status: 'Critically Endangered',
+          notes: 'Habitat fragmentation and poaching pressure.',
+        },
+        {
+          animal: 'Sea otter',
+          status: 'Endangered',
+          notes: 'Keystone species; sensitive to oil pollution.',
+        },
+        {
+          animal: 'Sumatran orangutan',
+          status: 'Critically Endangered',
+          notes: 'Deforestation for agriculture reduces habitat.',
+        },
+        {
+          animal: 'Hawksbill turtle',
+          status: 'Critically Endangered',
+          notes: 'Illegal trade; nesting sites under threat.',
+        },
+        {
+          animal: 'Axolotl',
+          status: 'Critically Endangered',
+          notes: 'Monitored via archived report exports.',
+        },
+        {
+          animal: 'Snow leopard',
+          status: 'Vulnerable',
+          notes: 'Human-wildlife conflict; shrinking range.',
+        },
+      ],
+    };
+
+    return json(res, 200, {
+      ok: true,
+      hint: 'Some export metadata is returned in response headers.',
+      report,
+    });
   } catch (e) {
     const msg = (e && typeof e.message === 'string')
       ? e.message

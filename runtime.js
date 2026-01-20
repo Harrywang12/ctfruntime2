@@ -169,6 +169,16 @@
         'A static SDG 15 page. Find the hidden proof code, then claim the flag.'
       )}
 
+      <div class="challenge-panel" style="background: var(--color-success-bg); border: 1px solid var(--color-success); margin-bottom: 20px;">
+        <p class="surface-note" style="color: var(--color-success); margin-bottom: 12px;"><strong>How to solve:</strong></p>
+        <ol style="margin-left: 20px; color: var(--color-text-secondary); line-height: 1.8; font-size: 14px;">
+          <li><strong>Find the proof code</strong> (32 hex characters) hidden on this challenge page.</li>
+          <li><strong>Paste the proof</strong> into the form below and click "Claim flag".</li>
+          <li><strong>You'll receive your flag</strong> — it will be a string like <code>SDG{...}</code>.</li>
+          <li><strong>Copy and submit the flag</strong> on the main contest platform to earn points.</li>
+        </ol>
+      </div>
+
       <div class="challenge-panel" role="region" aria-label="SDG 15 poster">
         <div class="pill sdg-tag">SDG 15 • Life on Land</div>
 
@@ -312,16 +322,26 @@
   }
 
   function renderSaveTheSpeciesChallenge(ctx) {
-    // Purely logic-based: the proof code is present as an unusual note.
+    // Easy challenge: user triggers a report download and finds the proof in
+    // request/response metadata (not rendered in the DOM).
     // The real flag is claimed dynamically from the backend.
-    let proof = null;
 
     setChallengeSurface(`
       ${renderChallengeHeader(
         ctx.runtimeSlug,
         'Save the Species',
-        'A simple conservation status table. One row contains an unusual code; use it as proof to claim the flag.'
+        'A conservation status table with a report export. Find the archive tag used for the export, then claim the flag.'
       )}
+
+      <div class="challenge-panel" style="background: var(--color-success-bg); border: 1px solid var(--color-success); margin-bottom: 20px;">
+        <p class="surface-note" style="color: var(--color-success); margin-bottom: 12px;"><strong>How to solve:</strong></p>
+        <ol style="margin-left: 20px; color: var(--color-text-secondary); line-height: 1.8; font-size: 14px;">
+          <li><strong>Find the proof code</strong> (32 hex characters) by exploring this challenge.</li>
+          <li><strong>Paste the proof</strong> into the form and click "Claim flag".</li>
+          <li><strong>You'll receive your flag</strong> — it will be a string like <code>SDG{...}</code>.</li>
+          <li><strong>Copy and submit the flag</strong> on the main contest platform to earn points.</li>
+        </ol>
+      </div>
 
       <table class="surface-table" aria-label="Animals and conservation statuses">
         <thead>
@@ -355,7 +375,7 @@
           <tr>
             <td>Axolotl</td>
             <td>Critically Endangered</td>
-            <td>Unusual archive tag: <strong id="sts-archive">(loading)</strong></td>
+            <td>Archived monitoring report available (export required).</td>
           </tr>
           <tr>
             <td>Snow leopard</td>
@@ -367,12 +387,23 @@
 
       <div class="divider"></div>
 
+      <div class="challenge-panel">
+        <p class="surface-note">Field report export</p>
+        <p class="help">Something interesting happens in the DevTools network section when you click download!</p>
+        <div class="actions">
+          <button class="button secondary" id="sts-download" type="button">Download report</button>
+        </div>
+        <pre class="code-block" id="sts-raw" style="white-space: pre-wrap; overflow-wrap: anywhere;">(no report yet)</pre>
+      </div>
+
+      <div class="divider"></div>
+
       <div class="challenge-grid">
         <div class="challenge-panel">
           <div class="field">
             <label class="label" for="sts-proof">Proof code</label>
             <input class="input" id="sts-proof" name="proof" placeholder="32 hex characters" autocomplete="off" />
-            <p class="help">No hacking required: copy the unusual archive tag from the table.</p>
+            <p class="help">Paste the archive tag you found from the export request/response.</p>
           </div>
           <div class="actions">
             <button class="button" id="sts-claim" type="button">Claim flag</button>
@@ -390,8 +421,10 @@
     const input = document.getElementById('sts-proof');
     const claimBtn = document.getElementById('sts-claim');
     const resetBtn = document.getElementById('sts-reset');
+    const downloadBtn = document.getElementById('sts-download');
     const out = document.getElementById('sts-output');
     const flagEl = document.getElementById('sts-flag');
+    const rawEl = document.getElementById('sts-raw');
 
     function write(message, kind) {
       out.classList.remove('ok', 'bad');
@@ -443,8 +476,13 @@
       input.focus();
     });
 
-    (async () => {
-      if (!ctx.launchToken) return;
+    async function downloadReport() {
+      if (!ctx.launchToken) {
+        write('Missing launch token; cannot download report.', 'bad');
+        return;
+      }
+
+      write('Downloading report…', 'ok');
       try {
         const qs = new URLSearchParams({ seed: ctx.runtimeState.artifact_seed });
         const resp = await fetch(`/api/save-the-species?${qs.toString()}`, {
@@ -452,29 +490,38 @@
           credentials: 'omit',
           cache: 'no-store',
         });
-        const data = await resp.json().catch(() => null);
+
+        // Intentionally do NOT read or display any proof-like metadata here.
+        const text = await resp.text();
+        if (rawEl) {
+          try {
+            const parsed = JSON.parse(text);
+            rawEl.textContent = JSON.stringify(parsed, null, 2);
+          } catch {
+            rawEl.textContent = text;
+          }
+        }
+
         if (!resp.ok) {
-          const cell = document.getElementById('sts-archive');
-          const raw = data && (data.error ?? data.message);
-          const msg =
-            typeof raw === 'string'
-              ? raw
-              : raw
-                ? JSON.stringify(raw)
-                : `HTTP ${resp.status}`;
-          if (cell) cell.textContent = `(error: ${msg})`;
+          let msg = `HTTP ${resp.status}`;
+          try {
+            const parsed = JSON.parse(text);
+            msg = parsed?.error || parsed?.message || msg;
+          } catch {
+            // ignore
+          }
+          write(`Report download failed: ${msg}`, 'bad');
           return;
         }
-        if (data && typeof data.proof === 'string') {
-          proof = data.proof.trim();
-          const cell = document.getElementById('sts-archive');
-          if (cell) cell.textContent = proof;
-        }
-      } catch {
-        const cell = document.getElementById('sts-archive');
-        if (cell) cell.textContent = '(error loading)';
+
+        write('Report downloaded. Check Network → response headers for the archive tag.', 'ok');
+      } catch (e) {
+        const msg = (e && e.message) ? e.message : 'Unknown error';
+        write(`Report download failed: ${msg}`, 'bad');
       }
-    })();
+    }
+
+    downloadBtn?.addEventListener('click', downloadReport);
   }
 
   function renderEndangeredAccessChallenge(ctx) {
