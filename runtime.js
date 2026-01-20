@@ -289,7 +289,13 @@
         const data = await resp.json().catch(() => null);
         if (!resp.ok) {
           const hidden = document.getElementById('hips-hidden');
-          const msg = (data && (data.error || data.message)) ? String(data.error || data.message) : `HTTP ${resp.status}`;
+          const raw = data && (data.error ?? data.message);
+          const msg =
+            typeof raw === 'string'
+              ? raw
+              : raw
+                ? JSON.stringify(raw)
+                : `HTTP ${resp.status}`;
           if (hidden) hidden.textContent = `PROOF: (error: ${msg})`;
           return;
         }
@@ -449,7 +455,13 @@
         const data = await resp.json().catch(() => null);
         if (!resp.ok) {
           const cell = document.getElementById('sts-archive');
-          const msg = (data && (data.error || data.message)) ? String(data.error || data.message) : `HTTP ${resp.status}`;
+          const raw = data && (data.error ?? data.message);
+          const msg =
+            typeof raw === 'string'
+              ? raw
+              : raw
+                ? JSON.stringify(raw)
+                : `HTTP ${resp.status}`;
           if (cell) cell.textContent = `(error: ${msg})`;
           return;
         }

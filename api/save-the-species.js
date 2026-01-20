@@ -26,7 +26,13 @@ async function redeemLaunchToken(token) {
     let errorMessage = `HTTP ${response.status}`;
     try {
       const errorData = await response.json();
-      errorMessage = errorData.error || errorData.message || errorMessage;
+      const raw = errorData && (errorData.error ?? errorData.message);
+      errorMessage =
+        typeof raw === 'string'
+          ? raw
+          : raw
+            ? JSON.stringify(raw)
+            : errorMessage;
     } catch {
       errorMessage = response.statusText || errorMessage;
     }
