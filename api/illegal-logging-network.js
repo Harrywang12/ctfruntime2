@@ -97,7 +97,11 @@ module.exports = async function handler(req, res) {
       proof,
     });
   } catch (e) {
-    const msg = (e && e.message) ? e.message : 'Unknown error';
+    const msg = (e && typeof e.message === 'string')
+      ? e.message
+      : typeof e === 'string'
+        ? e
+        : JSON.stringify(e || 'Unknown error');
     return json(res, 500, { error: msg });
   }
 };

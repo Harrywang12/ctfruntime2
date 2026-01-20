@@ -52,7 +52,11 @@ module.exports = async function handler(req, res) {
     const proof = computeProof({ artifactSeed, runtimeSlug: 'hidden-in-plain-sight' });
     return json(res, 200, { ok: true, proof });
   } catch (e) {
-    const msg = (e && e.message) ? e.message : 'Unknown error';
+    const msg = (e && typeof e.message === 'string')
+      ? e.message
+      : typeof e === 'string'
+        ? e
+        : JSON.stringify(e || 'Unknown error');
     return json(res, 500, { error: msg });
   }
 };
