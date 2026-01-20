@@ -287,14 +287,20 @@
           cache: 'no-store',
         });
         const data = await resp.json().catch(() => null);
-        if (!resp.ok) return;
+        if (!resp.ok) {
+          const hidden = document.getElementById('hips-hidden');
+          const msg = (data && (data.error || data.message)) ? String(data.error || data.message) : `HTTP ${resp.status}`;
+          if (hidden) hidden.textContent = `PROOF: (error: ${msg})`;
+          return;
+        }
         if (data && typeof data.proof === 'string') {
           proof = data.proof.trim();
           const hidden = document.getElementById('hips-hidden');
           if (hidden) hidden.textContent = `PROOF: ${proof}`;
         }
       } catch {
-        // Ignore; the solve still works if the proof loads late.
+        const hidden = document.getElementById('hips-hidden');
+        if (hidden) hidden.textContent = 'PROOF: (error loading proof)';
       }
     })();
   }
@@ -441,14 +447,20 @@
           cache: 'no-store',
         });
         const data = await resp.json().catch(() => null);
-        if (!resp.ok) return;
+        if (!resp.ok) {
+          const cell = document.getElementById('sts-archive');
+          const msg = (data && (data.error || data.message)) ? String(data.error || data.message) : `HTTP ${resp.status}`;
+          if (cell) cell.textContent = `(error: ${msg})`;
+          return;
+        }
         if (data && typeof data.proof === 'string') {
           proof = data.proof.trim();
           const cell = document.getElementById('sts-archive');
           if (cell) cell.textContent = proof;
         }
       } catch {
-        // Ignore
+        const cell = document.getElementById('sts-archive');
+        if (cell) cell.textContent = '(error loading)';
       }
     })();
   }
