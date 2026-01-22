@@ -661,14 +661,14 @@ body {
 
 .sdg-poster-title {
   margin: 0 0 6px 0;
-  font-size: 14px;
+  font-size: 22px;
   font-weight: 600;
   color: var(--color-text-primary);
 }
 
 .sdg-poster-text {
   margin: 0;
-  font-size: 13px;
+  font-size: 18px;
   color: var(--color-text-secondary);
 }
 
