@@ -686,24 +686,37 @@
       )}
 
       <div class="challenge-panel" style="background: var(--color-accent-glow); border: 1px solid var(--color-accent); margin-bottom: 18px;">
-        <strong>Description:</strong> Your goal is to find a verification token that will pass the client-side check and allow you to claim the flag. The token format is <code>VER-&lt;permitId&gt;-&lt;sig&gt;</code>.
+        <strong>Description:</strong> Your goal is to find a verification token that will pass the check and allow you to claim the flag. The token format is <code>VER-&lt;permitId&gt;-&lt;signature&gt;</code>, where the signature is derived from the permitId.
       </div>
 
       <div class="challenge-panel">
-        <p class="surface-note">Compliance Officer View (mocked)</p>
-        <p class="sdg-poster-text">Permit uploads and satellite pings are "verified" by a weak token check. No real secrets here.</p>
-        <ul class="sdg-poster-text" style="margin-left: 16px; list-style: disc;">
+        <p class="surface-note" style="font-size: 13px; opacity: 0.8;">Compliance Officer View (mocked)</p>
+        <p style="font-size: 13px; line-height: 1.6; color: var(--color-text-secondary);">
+          Permit uploads and satellite pings are "verified" by a weak token check. No real secrets here.
+        </p>
+        <ul style="margin-left: 16px; list-style: disc; font-size: 13px; line-height: 1.6; color: var(--color-text-secondary);">
           <li>Enter any token starting with <code>VER-</code></li>
           <li>Some systems are more trusting than they should be. Not all checks are as thorough as they seem.</li>
         </ul>
+      </div>
+
+      <div class="challenge-panel" style="background: var(--color-success-bg); border: 1px solid var(--color-success); margin-bottom: 18px;">
+        <p style="color: var(--color-success); margin-bottom: 8px; font-weight: 600;">💡 Hints:</p>
+        <ol style="margin-left: 20px; color: var(--color-text-secondary); line-height: 1.8; font-size: 14px;">
+          <li><strong>Token Format:</strong> The token is <code>VER-&lt;permitId&gt;-&lt;signature&gt;</code>. Example: <code>VER-forest2026-a1b2c3d4</code></li>
+          <li><strong>How signatures work:</strong> The signature should be derived by hashing the permitId. A common hash algorithm is SHA-256.</li>
+          <li><strong>Verification flaw:</strong> Open your browser's DevTools (F12) and look at the JavaScript code that validates tokens. Does it check the <em>entire</em> signature, or just part of it?</li>
+          <li><strong>Exploit:</strong> If only a small part of the signature is checked, you might be able to brute-force or craft a valid token.</li>
+          <li><strong>Try this:</strong> Use <code>forest2026</code> as your permitId, compute its SHA-256 hash, take the first few hex characters, and build your token.</li>
+        </ol>
       </div>
 
       <div class="challenge-grid">
         <div class="challenge-panel">
           <div class="field">
             <label class="label" for="iln-token">Verification token</label>
-            <input class="input" id="iln-token" name="token" placeholder="VER-xxxxx" autocomplete="off" />
-            <p class="help">Hint: Review the client-side code or use DevTools to see how the token is validated. You may not need a perfect match.</p>
+            <input class="input" id="iln-token" name="token" placeholder="VER-forest2026-xxxxx" autocomplete="off" />
+            <p class="help">Hint: Check the client-side JavaScript validation code in your DevTools. Look for how many characters of the signature are actually verified.</p>
           </div>
           <div class="actions">
             <button class="button" id="iln-verify" type="button">Verify</button>
@@ -785,16 +798,19 @@
           return;
         }
 
-        if (!ctx.launchToken) {
-          write('Missing launch token; cannot verify/claim.', 'bad');
+        const seed = ctx?.runtimeState?.artifact_seed;
+        if (!seed || !/^[0-9a-f]{64}$/i.test(String(seed))) {
+          write('Missing or invalid runtime seed; cannot request proof.', 'bad');
           return;
         }
 
         write('Verification passed. Requesting proof…', 'ok');
 
         try {
+          // IMPORTANT: use `seed` here instead of `token`.
+          // The launch token is one-time and is already redeemed during runtime init.
           const qs = new URLSearchParams({
-            token: ctx.launchToken,
+            seed,
             slug: ctx.runtimeSlug,
             verificationToken: token,
           });
@@ -816,6 +832,11 @@
             return;
           }
           proof = p;
+
+          if (!ctx.launchToken) {
+            write('Proof issued, but missing launch token; cannot claim flag.', 'bad');
+            return;
+          }
 
           write('Proof issued. Claiming flag…', 'ok');
           const flag = await claimFlag(ctx.launchToken, proof, ctx.runtimeSlug);
