@@ -1111,6 +1111,173 @@
     fetchAggregated();
   }
 
+  function renderRangerRiskEngineChallenge(ctx) {
+    setChallengeSurface(`
+      ${renderChallengeHeader(
+        ctx.runtimeSlug,
+        'Ranger Risk Engine',
+        'A “sandboxed” risk-score formula service for SDG 15 patrol planning.'
+      )}
+
+      <div class="challenge-panel" style="background: var(--color-accent-glow); border: 1px solid var(--color-accent); margin-bottom: 18px;">
+        <strong>Description:</strong> Analysts can submit a custom formula to score patrol risk.
+        The service claims it safely evaluates formulas server-side.
+        Your goal is to obtain the proof code for this challenge and claim the flag.
+      </div>
+
+      <div class="challenge-panel" style="background: var(--color-success-bg); border: 1px solid var(--color-success); margin-bottom: 20px;">
+        <p class="surface-note" style="color: var(--color-success); margin-bottom: 12px;"><strong>How to solve:</strong></p>
+        <ol style="margin-left: 20px; color: var(--color-text-secondary); line-height: 1.8; font-size: 14px;">
+          <li><strong>Explore the formula engine</strong> and what it executes.</li>
+          <li><strong>Recover a proof code</strong> (32 hex characters).</li>
+          <li><strong>Paste the proof</strong> below and click “Claim flag”.</li>
+        </ol>
+      </div>
+
+      <div class="challenge-grid">
+        <div class="challenge-panel">
+          <p class="surface-note">Risk formula</p>
+          <p class="help">Enter a single JavaScript expression over <code>row</code>. Example: <code>(row.seizures * 12) + (100 - row.paperwork)</code></p>
+
+          <div class="field">
+            <label class="label" for="rre-expr">Expression</label>
+            <textarea class="input" id="rre-expr" rows="4" spellcheck="false" autocomplete="off"></textarea>
+            <p class="help">Hint: “Sandboxed” often just means “best effort”.</p>
+          </div>
+
+          <div class="actions">
+            <button class="button secondary" id="rre-run" type="button">Run formula</button>
+            <button class="button secondary" id="rre-reset" type="button">Reset</button>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="field">
+            <label class="label" for="rre-proof">Proof code</label>
+            <input class="input" id="rre-proof" name="proof" placeholder="32 hex characters" autocomplete="off" />
+            <p class="help">Once you find the proof, claim the flag below.</p>
+          </div>
+          <div class="actions">
+            <button class="button" id="rre-claim" type="button">Claim flag</button>
+          </div>
+        </div>
+
+        <div class="challenge-panel">
+          <div class="output" id="rre-output" role="status" aria-live="polite">Ready…</div>
+          <div class="flag hidden" id="rre-flag" aria-label="Claimed flag"></div>
+          <div class="divider"></div>
+          <p class="surface-note">Raw API response</p>
+          <pre class="code-block" id="rre-raw">(no data yet)</pre>
+        </div>
+      </div>
+    `);
+
+    const exprEl = document.getElementById('rre-expr');
+    const runBtn = document.getElementById('rre-run');
+    const resetBtn = document.getElementById('rre-reset');
+    const out = document.getElementById('rre-output');
+    const raw = document.getElementById('rre-raw');
+    const proofEl = document.getElementById('rre-proof');
+    const claimBtn = document.getElementById('rre-claim');
+    const flagEl = document.getElementById('rre-flag');
+
+    function write(message, kind) {
+      out.classList.remove('ok', 'bad');
+      if (kind) out.classList.add(kind);
+      out.textContent = message;
+    }
+
+    function showFlag(flag) {
+      flagEl.textContent = flag;
+      flagEl.classList.remove('hidden');
+    }
+
+    function hideFlag() {
+      flagEl.textContent = '';
+      flagEl.classList.add('hidden');
+    }
+
+    async function runFormula() {
+      const expr = (exprEl.value || '').trim();
+
+      const seed = ctx?.runtimeState?.artifact_seed;
+      if (!seed || !/^[0-9a-f]{64}$/i.test(String(seed))) {
+        write('Missing or invalid runtime seed; cannot query engine.', 'bad');
+        return;
+      }
+
+      write('Evaluating formula…', 'ok');
+      hideFlag();
+
+      try {
+        const qs = new URLSearchParams({
+          seed,
+          slug: ctx.runtimeSlug,
+          expr: expr || '',
+        });
+        const resp = await fetch(`/api/ranger-risk-engine?${qs.toString()}`, {
+          method: 'GET',
+          credentials: 'omit',
+          cache: 'no-store',
+        });
+        const data = await resp.json().catch(() => null);
+        raw.textContent = JSON.stringify(data, null, 2);
+
+        if (!resp.ok) {
+          const msg = data?.error || data?.message || `HTTP ${resp.status}`;
+          write(`Engine error: ${msg}`, 'bad');
+          return;
+        }
+
+        const count = Array.isArray(data?.entries) ? data.entries.length : 0;
+        write(`OK. Scored ${count} routes. Review raw response.`, 'ok');
+      } catch (e) {
+        const msg = (e && e.message) ? e.message : 'Unknown error';
+        write(`Engine error: ${msg}`, 'bad');
+      }
+    }
+
+    runBtn?.addEventListener('click', runFormula);
+    resetBtn?.addEventListener('click', () => {
+      exprEl.value = '(row.seizures * 12) + (100 - row.paperwork) + (row.anomaly ? 25 : 0)';
+      raw.textContent = '(no data yet)';
+      proofEl.value = '';
+      hideFlag();
+      write('Ready…');
+      exprEl.focus();
+    });
+
+    claimBtn?.addEventListener('click', () => {
+      const value = (proofEl.value || '').trim();
+      if (!value) {
+        write('Paste the proof code first.', 'bad');
+        return;
+      }
+
+      hideFlag();
+      (async () => {
+        if (!ctx.launchToken) {
+          write('Missing launch token; cannot claim flag.', 'bad');
+          return;
+        }
+
+        write('Claiming flag…', 'ok');
+        try {
+          const flag = await claimFlag(ctx.launchToken, value, ctx.runtimeSlug);
+          write('Flag claimed. Copy and submit it on the main platform.', 'ok');
+          showFlag(flag);
+        } catch (e) {
+          const msg = (e && e.message) ? e.message : 'Unknown error';
+          write(`Claim failed: ${msg}`, 'bad');
+        }
+      })();
+    });
+
+    // Initialize defaults.
+    exprEl.value = '(row.seizures * 12) + (100 - row.paperwork) + (row.anomaly ? 25 : 0)';
+    runFormula();
+  }
+
   const CHALLENGES = Object.freeze({
     // Default module if slug is unknown
     demo: renderDemoChallenge,
@@ -1120,6 +1287,7 @@
     'endangered-access': renderEndangeredAccessChallenge,
     'illegal-logging-network': renderIllegalLoggingNetworkChallenge,
     'poacher-supply-chain': renderPoacherSupplyChainChallenge,
+    'ranger-risk-engine': renderRangerRiskEngineChallenge,
   });
 
   // ==========================================================================
