@@ -690,7 +690,7 @@
       </div>
 
       <div class="challenge-panel">
-        <p class="surface-note" style="font-size: 13px; opacity: 0.8;">Compliance Officer View (mocked)</p>
+        <p class="surface-note" style="font-size: 13px; opacity: 0.8;">Compliance Officer View</p>
         <p style="font-size: 13px; line-height: 1.6; color: var(--color-text-secondary);">
           Permit uploads and satellite pings are "verified" by a weak token check. No real secrets here.
         </p>
