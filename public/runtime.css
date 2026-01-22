@@ -648,9 +648,7 @@ body {
 }
 
 .sdg-poster-row {
-  display: flex;
-  gap: 12px;
-  align-items: flex-start;
+  display: block;
 }
 
 .sdg-poster-icon {
