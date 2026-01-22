@@ -868,7 +868,7 @@
       </div>
 
       <div class="challenge-panel">
-        <p class="surface-note">Transparency Portal (public-facing)</p>
+        <p class="surface-note">Transparency Portal</p>
         <p class="sdg-poster-text">
           This dashboard tracks confiscations linked to illegal wildlife trade.
           The site claims it only exposes aggregated data, but enforcement failures are often hidden in “internal” records.
