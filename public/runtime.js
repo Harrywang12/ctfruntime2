@@ -714,7 +714,7 @@
         <div class="challenge-panel">
           <div class="field">
             <label class="label" for="iln-token">Verification token</label>
-            <input class="input" id="iln-token" name="token" placeholder="VER-forest2026-xxxxx" autocomplete="off" />
+            <input class="input" id="iln-token" name="token" autocomplete="off" />
             <p class="help">Hint: Check the client-side JavaScript validation code in your DevTools. Look for how many characters of the signature are actually verified.</p>
           </div>
           <div class="actions">
