@@ -707,7 +707,6 @@
           <li><strong>How signatures work:</strong> The signature should be derived by hashing the permitId. A common hash algorithm is SHA-256.</li>
           <li><strong>Verification flaw:</strong> Open your browser's DevTools (F12) and look at the JavaScript code that validates tokens. Does it check the <em>entire</em> signature, or just part of it?</li>
           <li><strong>Exploit:</strong> If only a small part of the signature is checked, you might be able to brute-force or craft a valid token.</li>
-          <li><strong>Try this:</strong> Use <code>forest2026</code> as your permitId, compute its SHA-256 hash, take the first few hex characters, and build your token.</li>
         </ol>
       </div>
 
