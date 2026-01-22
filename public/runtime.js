@@ -1125,6 +1125,10 @@
         Your goal is to obtain the proof code for this challenge and claim the flag.
       </div>
 
+      <div class="challenge-panel">
+        <p class="help" style="margin:0;">Hint: If the engine blocks literal tokens, try constructing identifiers at runtime and probing what the evaluator can access.</p>
+      </div>
+
       <div class="challenge-panel" style="background: var(--color-success-bg); border: 1px solid var(--color-success); margin-bottom: 20px;">
         <p class="surface-note" style="color: var(--color-success); margin-bottom: 12px;"><strong>How to solve:</strong></p>
         <ol style="margin-left: 20px; color: var(--color-text-secondary); line-height: 1.8; font-size: 14px;">
