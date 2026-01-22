@@ -181,15 +181,9 @@
 
       <div class="challenge-panel" role="region" aria-label="SDG 15 poster">
         <div class="pill sdg-tag">SDG 15 • Life on Land</div>
-
         <div class="sdg-poster">
           <div class="sdg-poster-row">
-            <svg class="sdg-poster-icon" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
-              <rect x="0" y="0" width="64" height="64" rx="12" fill="#2e7d32"></rect>
-              <path d="M32 12c-7 8-12 14-12 22 0 9 5 16 12 16s12-7 12-16c0-8-5-14-12-22z" fill="#c8e6c9"></path>
-              <rect x="29" y="36" width="6" height="16" rx="3" fill="#795548"></rect>
-              <path d="M18 50c8-6 20-6 28 0" stroke="#1b5e20" stroke-width="3" fill="none" stroke-linecap="round"></path>
-            </svg>
+            <img src="/wildlifeposter.jpg" alt="Conservation Wildlife Poster" class="sdg-poster-img" style="max-width: 100%; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); margin-bottom: 16px;" />
             <div>
               <h4 class="sdg-poster-title">Protect forests, protect life.</h4>
               <p class="sdg-poster-text">
@@ -198,9 +192,7 @@
               </p>
             </div>
           </div>
-
           <div class="divider sdg-poster-divider"></div>
-
           <p class="sdg-poster-note">
             Challenge: find the hidden proof code on this page.
           </p>
@@ -536,6 +528,10 @@
         'Public conservation page with a fake client-side restriction gate.'
       )}
 
+      <div class="challenge-panel" style="background: var(--color-accent-glow); border: 1px solid var(--color-accent); margin-bottom: 18px;">
+        <strong>Description:</strong> Your goal is to obtain the telemetry proof code that is normally restricted by the UI. Bypass the client-side gate and retrieve the code to claim your flag.
+      </div>
+
       <div class="challenge-panel">
         <p class="help">Public brief:</p>
         <p class="sdg-poster-text">We monitor key habitats, track illegal logging signals, and publish open data.</p>
@@ -545,7 +541,7 @@
       <div class="challenge-panel" id="ea-guard">
         <div id="ea-locked" class="${hasBypassParam ? 'hidden' : ''}">
           <p class="surface-note">Restricted telemetry requires reviewer approval.</p>
-          <p class="help">Hint: client-only gate — inspect JS, try a URL param <code>?access=letmein</code>, or flip <code>window.overrideAccess = true</code> in console.</p>
+          <p class="help">Hint: The restriction is enforced only in the browser. Try manipulating the UI or URL, or use DevTools to change variables and see if you can access the telemetry.</p>
           <div class="actions">
             <button class="button secondary" id="ea-try">Run client check</button>
           </div>
@@ -682,12 +678,16 @@
         'Simulated SDG 15 compliance dashboard with a flawed verification token check.'
       )}
 
+      <div class="challenge-panel" style="background: var(--color-accent-glow); border: 1px solid var(--color-accent); margin-bottom: 18px;">
+        <strong>Description:</strong> Your goal is to find a verification token that will pass the client-side check and allow you to claim the flag. The token format is <code>VER-&lt;permitId&gt;-&lt;sig&gt;</code>.
+      </div>
+
       <div class="challenge-panel">
         <p class="surface-note">Compliance Officer View (mocked)</p>
         <p class="sdg-poster-text">Permit uploads and satellite pings are "verified" by a weak token check. No real secrets here.</p>
         <ul class="sdg-poster-text" style="margin-left: 16px; list-style: disc;">
           <li>Enter any token starting with <code>VER-</code></li>
-          <li>Checker only inspects a small suffix — can be brute-forced or read from the client.</li>
+          <li>Some systems are more trusting than they should be. Not all checks are as thorough as they seem.</li>
         </ul>
       </div>
 
@@ -696,7 +696,7 @@
           <div class="field">
             <label class="label" for="iln-token">Verification token</label>
             <input class="input" id="iln-token" name="token" placeholder="VER-xxxxx" autocomplete="off" />
-            <p class="help">Hint: legacy verifier. Inspect the JS for how the signature is checked.</p>
+            <p class="help">Hint: Review the client-side code or use DevTools to see how the token is validated. You may not need a perfect match.</p>
           </div>
           <div class="actions">
             <button class="button" id="iln-verify" type="button">Verify</button>
@@ -836,13 +836,17 @@
         'Public SDG 15 dashboard backed by an internal API that should only expose aggregated statistics.'
       )}
 
+      <div class="challenge-panel" style="background: var(--color-accent-glow); border: 1px solid var(--color-accent); margin-bottom: 18px;">
+        <strong>Description:</strong> Your goal is to find the internal case proof code that is not visible in the main dashboard. Use the dashboard’s features and network activity to discover hidden data.
+      </div>
+
       <div class="challenge-panel">
         <p class="surface-note">Transparency Portal (public-facing)</p>
         <p class="sdg-poster-text">
           This dashboard tracks confiscations linked to illegal wildlife trade.
           The site claims it only exposes aggregated data, but enforcement failures are often hidden in “internal” records.
         </p>
-        <p class="help">Tip: Watch the Network tab while using filters.</p>
+        <p class="help">Hint: Try using filters or inspecting network requests to see if you can access more detailed information than what is shown in the UI.</p>
       </div>
 
       <div class="challenge-grid">
