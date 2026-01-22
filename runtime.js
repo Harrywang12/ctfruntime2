@@ -183,7 +183,7 @@
         <div class="pill sdg-tag">SDG 15 • Life on Land</div>
         <div class="sdg-poster">
           <div class="sdg-poster-row">
-            <img src="/public/wildlifeposter.jpg" alt="Conservation Wildlife Poster" class="sdg-poster-img" style="max-width: 100%; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); margin-bottom: 16px;" />
+            <img src="/wildlifeposter.jpg" alt="Conservation Wildlife Poster" class="sdg-poster-img" style="max-width: 100%; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); margin-bottom: 16px;" />
             <div>
               <h4 class="sdg-poster-title">Protect forests, protect life.</h4>
               <p class="sdg-poster-text">
