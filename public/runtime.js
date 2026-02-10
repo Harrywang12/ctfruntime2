@@ -25,13 +25,13 @@
  * (proof/flag derivation and verification) happens server-side only.
  */
 
-(function() {
+(function () {
   'use strict';
 
   // ==========================================================================
   // CONFIGURATION
   // ==========================================================================
-  
+
   /**
    * Backend Edge Function URL for redeeming challenge tokens.
    * Update this to match your Supabase project reference.
@@ -42,7 +42,7 @@
    * Backend Edge Function URL for claiming a flag after a solve.
     * The function must validate the provided proof server-side.
    */
-    const CLAIM_URL = 'https://vgwukffsjudbybdeuodn.supabase.co/functions/v1/claim-runtime-flag';
+  const CLAIM_URL = 'https://vgwukffsjudbybdeuodn.supabase.co/functions/v1/claim-runtime-flag';
 
   /**
    * Set to false in production to disable console logging of sensitive data.
@@ -164,10 +164,10 @@
 
     setChallengeSurface(`
       ${renderChallengeHeader(
-        ctx.runtimeSlug,
-        'Hidden in Plain Sight',
-        'A static SDG 15 page. Find the hidden proof code, then claim the flag.'
-      )}
+      ctx.runtimeSlug,
+      'Hidden in Plain Sight',
+      'A static SDG 15 page. Find the hidden proof code, then claim the flag.'
+    )}
 
       <div class="challenge-panel" style="background: var(--color-success-bg); border: 1px solid var(--color-success); margin-bottom: 20px;">
         <p class="surface-note" style="color: var(--color-success); margin-bottom: 12px;"><strong>How to solve:</strong></p>
@@ -327,10 +327,10 @@
 
     setChallengeSurface(`
       ${renderChallengeHeader(
-        ctx.runtimeSlug,
-        'Save the Species',
-        'A conservation status table with a report export. Find the archive tag used for the export, then claim the flag.'
-      )}
+      ctx.runtimeSlug,
+      'Save the Species',
+      'A conservation status table with a report export. Find the archive tag used for the export, then claim the flag.'
+    )}
 
       <div class="challenge-panel" style="background: var(--color-success-bg); border: 1px solid var(--color-success); margin-bottom: 20px;">
         <p class="surface-note" style="color: var(--color-success); margin-bottom: 12px;"><strong>How to solve:</strong></p>
@@ -530,10 +530,10 @@
 
     setChallengeSurface(`
       ${renderChallengeHeader(
-        ctx.runtimeSlug,
-        'Endangered Access',
-        'Public conservation page with a fake client-side restriction gate.'
-      )}
+      ctx.runtimeSlug,
+      'Endangered Access',
+      'Public conservation page with a fake client-side restriction gate.'
+    )}
 
       <div class="challenge-panel" style="background: var(--color-accent-glow); border: 1px solid var(--color-accent); margin-bottom: 18px;">
         <strong>Description:</strong> Your goal is to obtain the telemetry proof code that is normally restricted by the UI. Bypass the client-side gate and retrieve the code to claim your flag.
@@ -680,10 +680,10 @@
 
     setChallengeSurface(`
       ${renderChallengeHeader(
-        ctx.runtimeSlug,
-        'Illegal Logging Network',
-        'Simulated SDG 15 compliance dashboard with a flawed verification token check.'
-      )}
+      ctx.runtimeSlug,
+      'Illegal Logging Network',
+      'Simulated SDG 15 compliance dashboard with a flawed verification token check.'
+    )}
 
       <div class="challenge-panel" style="background: var(--color-accent-glow); border: 1px solid var(--color-accent); margin-bottom: 18px;">
         <strong>Description:</strong> Your goal is to find a verification token that will pass the check and allow you to claim the flag. The token format is <code>VER-&lt;permitId&gt;-&lt;signature&gt;</code>, where the signature is derived from the permitId.
@@ -858,10 +858,10 @@
   function renderPoacherSupplyChainChallenge(ctx) {
     setChallengeSurface(`
       ${renderChallengeHeader(
-        ctx.runtimeSlug,
-        'Wildlife Protection Logistics',
-        'Public SDG 15 dashboard backed by an internal API that should only expose aggregated statistics.'
-      )}
+      ctx.runtimeSlug,
+      'Wildlife Protection Logistics',
+      'Public SDG 15 dashboard backed by an internal API that should only expose aggregated statistics.'
+    )}
 
       <div class="challenge-panel" style="background: var(--color-accent-glow); border: 1px solid var(--color-accent); margin-bottom: 18px;">
         <strong>Description:</strong> Your goal is to find the internal case proof code that is not visible in the main dashboard. Use the dashboard’s features and network activity to discover hidden data.
@@ -1114,10 +1114,10 @@
   function renderRangerRiskEngineChallenge(ctx) {
     setChallengeSurface(`
       ${renderChallengeHeader(
-        ctx.runtimeSlug,
-        'Ranger Risk Engine',
-        'A “sandboxed” risk-score formula service for SDG 15 patrol planning.'
-      )}
+      ctx.runtimeSlug,
+      'Ranger Risk Engine',
+      'A “sandboxed” risk-score formula service for SDG 15 patrol planning.'
+    )}
 
       <div class="challenge-panel" style="background: var(--color-accent-glow); border: 1px solid var(--color-accent); margin-bottom: 18px;">
         <strong>Description:</strong> Analysts can submit a custom formula to score patrol risk.
@@ -1282,16 +1282,546 @@
     runFormula();
   }
 
+  // ==========================================================================
+  // SDG 9 EASY CHALLENGES
+  // ==========================================================================
+
+  function renderFactoryMaintenanceChallenge(ctx) {
+    setChallengeSurface(`
+      ${renderChallengeHeader(ctx.runtimeSlug, 'Factory Maintenance', 'SDG 9 — An industrial control panel in maintenance mode. Find the diagnostic token.')}
+      <div class="challenge-panel" style="background: var(--color-success-bg); border: 1px solid var(--color-success); margin-bottom: 20px;">
+        <p class="surface-note" style="color: var(--color-success); margin-bottom: 12px;"><strong>How to solve:</strong></p>
+        <ol style="margin-left: 20px; color: var(--color-text-secondary); line-height: 1.8; font-size: 14px;">
+          <li><strong>Interact with the maintenance API</strong> and observe its responses.</li>
+          <li><strong>Find the proof code</strong> (32 hex characters) — the maintenance_token.</li>
+          <li><strong>Paste the proof</strong> below and click "Claim flag".</li>
+        </ol>
+      </div>
+      <div class="challenge-panel">
+        <p class="surface-note">Maintenance Panel</p>
+        <p class="sdg-poster-text">This factory control panel is in scheduled maintenance mode. The system exposes a status API.</p>
+        <p class="help">Hint: The API responds differently depending on which HTTP method you use. Not all methods return the same data.</p>
+        <div class="actions">
+          <button class="button secondary" id="fm-status" type="button">Check Status (GET)</button>
+          <button class="button secondary" id="fm-post" type="button">Submit Override (POST)</button>
+        </div>
+        <pre class="code-block" id="fm-raw">(no data yet)</pre>
+      </div>
+      <div class="divider"></div>
+      <div class="challenge-grid">
+        <div class="challenge-panel">
+          <div class="field">
+            <label class="label" for="fm-proof">Proof code</label>
+            <input class="input" id="fm-proof" name="proof" placeholder="32 hex characters" autocomplete="off" />
+          </div>
+          <div class="actions">
+            <button class="button" id="fm-claim" type="button">Claim flag</button>
+            <button class="button secondary" id="fm-reset" type="button">Reset</button>
+          </div>
+        </div>
+        <div class="challenge-panel">
+          <div class="output" id="fm-output" role="status" aria-live="polite">Waiting for proof…</div>
+          <div class="flag hidden" id="fm-flag" aria-label="Claimed flag"></div>
+        </div>
+      </div>
+    `);
+    const raw = document.getElementById('fm-raw');
+    const out = document.getElementById('fm-output');
+    const flagEl = document.getElementById('fm-flag');
+    const proofEl = document.getElementById('fm-proof');
+    function write(m, k) { out.classList.remove('ok', 'bad'); if (k) out.classList.add(k); out.textContent = m; }
+    function showFlag(f) { flagEl.textContent = f; flagEl.classList.remove('hidden'); }
+    function hideFlag() { flagEl.textContent = ''; flagEl.classList.add('hidden'); }
+    async function doFetch(method) {
+      const qs = new URLSearchParams({ seed: ctx.runtimeState.artifact_seed });
+      try {
+        const resp = await fetch('/api/factory-maintenance?' + qs.toString(), { method, credentials: 'omit', cache: 'no-store' });
+        const data = await resp.json().catch(() => null);
+        raw.textContent = JSON.stringify(data, null, 2);
+        write(resp.ok ? 'Response received. Check raw output.' : 'Error: ' + (data?.error || resp.status), resp.ok ? 'ok' : 'bad');
+      } catch (e) { write('Fetch error: ' + e.message, 'bad'); }
+    }
+    document.getElementById('fm-status')?.addEventListener('click', () => doFetch('GET'));
+    document.getElementById('fm-post')?.addEventListener('click', () => doFetch('POST'));
+    document.getElementById('fm-claim')?.addEventListener('click', () => {
+      const v = (proofEl.value || '').trim(); if (!v) { write('Paste proof first.', 'bad'); return; } hideFlag();
+      (async () => { try { const flag = await claimFlag(ctx.launchToken, v, ctx.runtimeSlug); write('Flag claimed.', 'ok'); showFlag(flag); } catch (e) { write('Claim failed: ' + e.message, 'bad'); } })();
+    });
+    document.getElementById('fm-reset')?.addEventListener('click', () => { proofEl.value = ''; raw.textContent = '(no data yet)'; hideFlag(); write('Waiting for proof…'); });
+  }
+
+  function renderSupplyChainMapChallenge(ctx) {
+    setChallengeSurface(`
+      ${renderChallengeHeader(ctx.runtimeSlug, 'Supply Chain Map', 'SDG 9 — A global infrastructure supply chain tracker. Not all routes are shown on the map.')}
+      <div class="challenge-panel" style="background: var(--color-success-bg); border: 1px solid var(--color-success); margin-bottom: 20px;">
+        <p class="surface-note" style="color: var(--color-success); margin-bottom: 12px;"><strong>How to solve:</strong></p>
+        <ol style="margin-left: 20px; color: var(--color-text-secondary); line-height: 1.8; font-size: 14px;">
+          <li><strong>Load the supply chain data</strong> and compare what the UI shows vs. the raw API response.</li>
+          <li><strong>Find the proof code</strong> (32 hex characters) hidden in the data.</li>
+          <li><strong>Paste the proof</strong> below and click "Claim flag".</li>
+        </ol>
+      </div>
+      <div class="challenge-panel">
+        <p class="surface-note">Active Routes</p>
+        <p class="help">Hint: The map only renders routes with status "active". What about other statuses?</p>
+        <div class="actions"><button class="button secondary" id="scm-load" type="button">Load Routes</button></div>
+        <table class="surface-table" id="scm-table" aria-label="Supply chain routes"><thead><tr><th>Route ID</th><th>Origin</th><th>Destination</th><th>Material</th><th>Tonnage</th></tr></thead><tbody id="scm-tbody"></tbody></table>
+      </div>
+      <div class="challenge-panel"><p class="surface-note">Raw API response</p><pre class="code-block" id="scm-raw">(no data yet)</pre></div>
+      <div class="divider"></div>
+      <div class="challenge-grid">
+        <div class="challenge-panel">
+          <div class="field"><label class="label" for="scm-proof">Proof code</label><input class="input" id="scm-proof" placeholder="32 hex characters" autocomplete="off" /></div>
+          <div class="actions"><button class="button" id="scm-claim" type="button">Claim flag</button><button class="button secondary" id="scm-reset" type="button">Reset</button></div>
+        </div>
+        <div class="challenge-panel">
+          <div class="output" id="scm-output" role="status" aria-live="polite">Waiting for proof…</div>
+          <div class="flag hidden" id="scm-flag" aria-label="Claimed flag"></div>
+        </div>
+      </div>
+    `);
+    const raw = document.getElementById('scm-raw'), tbody = document.getElementById('scm-tbody'), out = document.getElementById('scm-output'), flagEl = document.getElementById('scm-flag'), proofEl = document.getElementById('scm-proof');
+    function write(m, k) { out.classList.remove('ok', 'bad'); if (k) out.classList.add(k); out.textContent = m; }
+    function showFlag(f) { flagEl.textContent = f; flagEl.classList.remove('hidden'); }
+    function hideFlag() { flagEl.textContent = ''; flagEl.classList.add('hidden'); }
+    document.getElementById('scm-load')?.addEventListener('click', async () => {
+      const qs = new URLSearchParams({ seed: ctx.runtimeState.artifact_seed });
+      try {
+        const resp = await fetch('/api/supply-chain-map?' + qs, { credentials: 'omit', cache: 'no-store' });
+        const data = await resp.json().catch(() => null);
+        raw.textContent = JSON.stringify(data, null, 2);
+        tbody.innerHTML = '';
+        if (data?.routes) {
+          data.routes.filter(r => r.status === 'active').forEach(r => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = '<td>' + escapeText(r.route_id) + '</td><td>' + escapeText(r.origin) + '</td><td>' + escapeText(r.destination) + '</td><td>' + escapeText(r.material) + '</td><td>' + (r.tonnage || '—') + '</td>';
+            tbody.appendChild(tr);
+          });
+          write('Loaded ' + data.routes.filter(r => r.status === 'active').length + ' active routes. Are there others?', 'ok');
+        }
+      } catch (e) { write('Error: ' + e.message, 'bad'); }
+    });
+    document.getElementById('scm-claim')?.addEventListener('click', () => {
+      const v = (proofEl.value || '').trim(); if (!v) { write('Paste proof first.', 'bad'); return; } hideFlag();
+      (async () => { try { const flag = await claimFlag(ctx.launchToken, v, ctx.runtimeSlug); write('Flag claimed.', 'ok'); showFlag(flag); } catch (e) { write('Claim failed: ' + e.message, 'bad'); } })();
+    });
+    document.getElementById('scm-reset')?.addEventListener('click', () => { proofEl.value = ''; raw.textContent = '(no data yet)'; tbody.innerHTML = ''; hideFlag(); write('Waiting for proof…'); });
+  }
+
+  function renderLegacyModemChallenge(ctx) {
+    setChallengeSurface(`
+      ${renderChallengeHeader(ctx.runtimeSlug, 'Legacy Modem', 'SDG 9 — A legacy modem admin panel. Authenticate to retrieve diagnostics.')}
+      <div class="challenge-panel" style="background: var(--color-success-bg); border: 1px solid var(--color-success); margin-bottom: 20px;">
+        <p class="surface-note" style="color: var(--color-success); margin-bottom: 12px;"><strong>How to solve:</strong></p>
+        <ol style="margin-left: 20px; color: var(--color-text-secondary); line-height: 1.8; font-size: 14px;">
+          <li><strong>Find the default credentials</strong> for the legacy modem admin panel.</li>
+          <li><strong>Authenticate</strong> and retrieve the diagnostic token (32 hex characters).</li>
+          <li><strong>Paste the proof</strong> below and click "Claim flag".</li>
+        </ol>
+      </div>
+      <div class="challenge-panel">
+        <p class="surface-note">LegacyModem-9600 Admin Panel</p>
+        <p class="sdg-poster-text">This modem was deployed as part of the original SDG 9 rural connectivity project. It still uses HTTP Basic authentication.</p>
+        <!-- DEFAULT CREDENTIALS: admin / infra2030 — TODO: remove before production -->
+        <p class="help">Hint: Legacy infrastructure often ships with default credentials. Check the page source for clues.</p>
+        <p class="help" style="font-size:11px; opacity:0.5;">Firmware: LM-9600-v1.2.3 | Default user: admin | Setup guide ref: infra2030-manual.pdf</p>
+        <div class="actions"><button class="button secondary" id="lm-connect" type="button">Connect (no auth)</button></div>
+        <pre class="code-block" id="lm-raw">(no data yet)</pre>
+      </div>
+      <div class="divider"></div>
+      <div class="challenge-grid">
+        <div class="challenge-panel">
+          <div class="field"><label class="label" for="lm-proof">Proof code</label><input class="input" id="lm-proof" placeholder="32 hex characters" autocomplete="off" /></div>
+          <div class="actions"><button class="button" id="lm-claim" type="button">Claim flag</button><button class="button secondary" id="lm-reset" type="button">Reset</button></div>
+        </div>
+        <div class="challenge-panel">
+          <div class="output" id="lm-output" role="status" aria-live="polite">Waiting for proof…</div>
+          <div class="flag hidden" id="lm-flag" aria-label="Claimed flag"></div>
+        </div>
+      </div>
+    `);
+    const raw = document.getElementById('lm-raw'), out = document.getElementById('lm-output'), flagEl = document.getElementById('lm-flag'), proofEl = document.getElementById('lm-proof');
+    function write(m, k) { out.classList.remove('ok', 'bad'); if (k) out.classList.add(k); out.textContent = m; }
+    function showFlag(f) { flagEl.textContent = f; flagEl.classList.remove('hidden'); }
+    function hideFlag() { flagEl.textContent = ''; flagEl.classList.add('hidden'); }
+    document.getElementById('lm-connect')?.addEventListener('click', async () => {
+      const qs = new URLSearchParams({ seed: ctx.runtimeState.artifact_seed });
+      try {
+        const resp = await fetch('/api/legacy-modem?' + qs, { credentials: 'omit', cache: 'no-store' });
+        const data = await resp.json().catch(() => null);
+        raw.textContent = JSON.stringify(data, null, 2);
+        write(resp.ok ? 'Connected.' : 'Auth required: ' + JSON.stringify(data?.error || resp.status), resp.ok ? 'ok' : 'bad');
+      } catch (e) { write('Error: ' + e.message, 'bad'); }
+    });
+    document.getElementById('lm-claim')?.addEventListener('click', () => {
+      const v = (proofEl.value || '').trim(); if (!v) { write('Paste proof first.', 'bad'); return; } hideFlag();
+      (async () => { try { const flag = await claimFlag(ctx.launchToken, v, ctx.runtimeSlug); write('Flag claimed.', 'ok'); showFlag(flag); } catch (e) { write('Claim failed: ' + e.message, 'bad'); } })();
+    });
+    document.getElementById('lm-reset')?.addEventListener('click', () => { proofEl.value = ''; raw.textContent = '(no data yet)'; hideFlag(); write('Waiting for proof…'); });
+  }
+
+  // ==========================================================================
+  // SDG 9 MEDIUM CHALLENGES
+  // ==========================================================================
+
+  function renderIotDashboardChallenge(ctx) {
+    setChallengeSurface(`
+      ${renderChallengeHeader(ctx.runtimeSlug, 'IoT Dashboard', 'SDG 9 — Industrial IoT sensor dashboard. Access the restricted admin device.')}
+      <div class="challenge-panel" style="background: var(--color-accent-glow); border: 1px solid var(--color-accent); margin-bottom: 18px;">
+        <strong>Description:</strong> The dashboard lists public sensor devices. An "admin" device holds calibration secrets, but direct access to it is blocked. Find a way around the access check.
+      </div>
+      <div class="challenge-panel">
+        <p class="surface-note">Sensor Dashboard</p>
+        <p class="help">Hint: The API blocks requests where device_id equals "admin". But what if the parameter appears more than once in the URL?</p>
+        <div class="actions">
+          <button class="button secondary" id="iot-list" type="button">List Devices</button>
+          <button class="button secondary" id="iot-admin" type="button">Request Admin (blocked)</button>
+        </div>
+        <pre class="code-block" id="iot-raw">(no data yet)</pre>
+      </div>
+      <div class="divider"></div>
+      <div class="challenge-grid">
+        <div class="challenge-panel">
+          <div class="field"><label class="label" for="iot-proof">Proof code</label><input class="input" id="iot-proof" placeholder="32 hex characters" autocomplete="off" /></div>
+          <div class="actions"><button class="button" id="iot-claim" type="button">Claim flag</button><button class="button secondary" id="iot-reset" type="button">Reset</button></div>
+        </div>
+        <div class="challenge-panel">
+          <div class="output" id="iot-output" role="status" aria-live="polite">Waiting for proof…</div>
+          <div class="flag hidden" id="iot-flag" aria-label="Claimed flag"></div>
+        </div>
+      </div>
+    `);
+    const raw = document.getElementById('iot-raw'), out = document.getElementById('iot-output'), flagEl = document.getElementById('iot-flag'), proofEl = document.getElementById('iot-proof');
+    function write(m, k) { out.classList.remove('ok', 'bad'); if (k) out.classList.add(k); out.textContent = m; }
+    function showFlag(f) { flagEl.textContent = f; flagEl.classList.remove('hidden'); }
+    function hideFlag() { flagEl.textContent = ''; flagEl.classList.add('hidden'); }
+    document.getElementById('iot-list')?.addEventListener('click', async () => {
+      const qs = new URLSearchParams({ seed: ctx.runtimeState.artifact_seed });
+      try { const resp = await fetch('/api/iot-dashboard?' + qs, { credentials: 'omit', cache: 'no-store' }); const data = await resp.json().catch(() => null); raw.textContent = JSON.stringify(data, null, 2); write(resp.ok ? 'Devices loaded.' : 'Error', 'ok'); } catch (e) { write('Error: ' + e.message, 'bad'); }
+    });
+    document.getElementById('iot-admin')?.addEventListener('click', async () => {
+      const qs = new URLSearchParams({ seed: ctx.runtimeState.artifact_seed, device_id: 'admin' });
+      try { const resp = await fetch('/api/iot-dashboard?' + qs, { credentials: 'omit', cache: 'no-store' }); const data = await resp.json().catch(() => null); raw.textContent = JSON.stringify(data, null, 2); write(resp.ok ? 'Admin data returned!' : 'Blocked: ' + (data?.error || resp.status), resp.ok ? 'ok' : 'bad'); } catch (e) { write('Error: ' + e.message, 'bad'); }
+    });
+    document.getElementById('iot-claim')?.addEventListener('click', () => { const v = (proofEl.value || '').trim(); if (!v) { write('Paste proof first.', 'bad'); return; } hideFlag(); (async () => { try { const flag = await claimFlag(ctx.launchToken, v, ctx.runtimeSlug); write('Flag claimed.', 'ok'); showFlag(flag); } catch (e) { write('Claim failed: ' + e.message, 'bad'); } })(); });
+    document.getElementById('iot-reset')?.addEventListener('click', () => { proofEl.value = ''; raw.textContent = '(no data yet)'; hideFlag(); write('Waiting for proof…'); });
+  }
+
+  function renderSmartCityGridChallenge(ctx) {
+    setChallengeSurface(`
+      ${renderChallengeHeader(ctx.runtimeSlug, 'Smart City Grid', 'SDG 9 — Smart city infrastructure grid. Forge a valid authentication signature.')}
+      <div class="challenge-panel" style="background: var(--color-accent-glow); border: 1px solid var(--color-accent); margin-bottom: 18px;">
+        <strong>Description:</strong> Grid control requires a signed request. The signature is <code>md5(timestamp + secret)</code>. A debug endpoint leaks partial information. Recover the full secret and forge a valid signature.
+      </div>
+      <div class="challenge-panel">
+        <p class="help">Hint: The secret is 8 hex characters. The debug endpoint reveals 6 of them. Brute-force the last 2 (only 256 possibilities).</p>
+        <div class="actions">
+          <button class="button secondary" id="scg-status" type="button">Grid Status</button>
+          <button class="button secondary" id="scg-debug" type="button">Debug Info</button>
+        </div>
+        <div class="field" style="margin-top:12px;">
+          <label class="label" for="scg-sig">Signature (md5 hex)</label>
+          <input class="input" id="scg-sig" placeholder="32-char md5 hash" autocomplete="off" />
+        </div>
+        <div class="actions"><button class="button secondary" id="scg-auth" type="button">Authenticate</button></div>
+        <pre class="code-block" id="scg-raw">(no data yet)</pre>
+      </div>
+      <div class="divider"></div>
+      <div class="challenge-grid">
+        <div class="challenge-panel">
+          <div class="field"><label class="label" for="scg-proof">Proof code</label><input class="input" id="scg-proof" placeholder="32 hex characters" autocomplete="off" /></div>
+          <div class="actions"><button class="button" id="scg-claim" type="button">Claim flag</button><button class="button secondary" id="scg-reset" type="button">Reset</button></div>
+        </div>
+        <div class="challenge-panel">
+          <div class="output" id="scg-output" role="status" aria-live="polite">Waiting for proof…</div>
+          <div class="flag hidden" id="scg-flag" aria-label="Claimed flag"></div>
+        </div>
+      </div>
+    `);
+    const raw = document.getElementById('scg-raw'), out = document.getElementById('scg-output'), flagEl = document.getElementById('scg-flag'), proofEl = document.getElementById('scg-proof'), sigEl = document.getElementById('scg-sig');
+    function write(m, k) { out.classList.remove('ok', 'bad'); if (k) out.classList.add(k); out.textContent = m; }
+    function showFlag(f) { flagEl.textContent = f; flagEl.classList.remove('hidden'); }
+    function hideFlag() { flagEl.textContent = ''; flagEl.classList.add('hidden'); }
+    async function apiCall(action, extra) {
+      const params = { seed: ctx.runtimeState.artifact_seed, action }; if (extra) Object.assign(params, extra);
+      const qs = new URLSearchParams(params);
+      try { const resp = await fetch('/api/smart-city-grid?' + qs, { credentials: 'omit', cache: 'no-store' }); const data = await resp.json().catch(() => null); raw.textContent = JSON.stringify(data, null, 2); write(resp.ok ? 'Response received.' : 'Error: ' + (data?.error || resp.status), resp.ok ? 'ok' : 'bad'); } catch (e) { write('Error: ' + e.message, 'bad'); }
+    }
+    document.getElementById('scg-status')?.addEventListener('click', () => apiCall('status'));
+    document.getElementById('scg-debug')?.addEventListener('click', () => apiCall('debug'));
+    document.getElementById('scg-auth')?.addEventListener('click', () => { const s = (sigEl.value || '').trim(); if (!s) { write('Enter a signature.', 'bad'); return; } apiCall('authenticate', { signature: s }); });
+    document.getElementById('scg-claim')?.addEventListener('click', () => { const v = (proofEl.value || '').trim(); if (!v) { write('Paste proof first.', 'bad'); return; } hideFlag(); (async () => { try { const flag = await claimFlag(ctx.launchToken, v, ctx.runtimeSlug); write('Flag claimed.', 'ok'); showFlag(flag); } catch (e) { write('Claim failed: ' + e.message, 'bad'); } })(); });
+    document.getElementById('scg-reset')?.addEventListener('click', () => { proofEl.value = ''; sigEl.value = ''; raw.textContent = '(no data yet)'; hideFlag(); write('Waiting for proof…'); });
+  }
+
+  function renderDroneFlightPathChallenge(ctx) {
+    setChallengeSurface(`
+      ${renderChallengeHeader(ctx.runtimeSlug, 'Drone Flight Path', 'SDG 9 — Drone delivery fleet controller. Escalate to admin privileges via the flight plan API.')}
+      <div class="challenge-panel" style="background: var(--color-accent-glow); border: 1px solid var(--color-accent); margin-bottom: 18px;">
+        <strong>Description:</strong> Submit a JSON flight plan to register a delivery route. The system merges your plan into the drone state object. Admin flights reveal restricted corridor data. Can you escalate your privileges?
+      </div>
+      <div class="challenge-panel">
+        <p class="help">Hint: The API uses a naive object merge. Certain special JSON keys can modify the prototype chain or overwrite internal properties.</p>
+        <div class="actions"><button class="button secondary" id="dfp-info" type="button">Get Info (GET)</button></div>
+        <div class="field" style="margin-top:12px;">
+          <label class="label" for="dfp-body">Flight Plan JSON</label>
+          <textarea class="input" id="dfp-body" rows="5" spellcheck="false">{"drone_id": "DRN-007", "waypoints": [{"lat": 6.5, "lng": 3.4, "alt": 120}]}</textarea>
+        </div>
+        <div class="actions"><button class="button secondary" id="dfp-send" type="button">Submit Flight Plan (POST)</button></div>
+        <pre class="code-block" id="dfp-raw">(no data yet)</pre>
+      </div>
+      <div class="divider"></div>
+      <div class="challenge-grid">
+        <div class="challenge-panel">
+          <div class="field"><label class="label" for="dfp-proof">Proof code</label><input class="input" id="dfp-proof" placeholder="32 hex characters" autocomplete="off" /></div>
+          <div class="actions"><button class="button" id="dfp-claim" type="button">Claim flag</button><button class="button secondary" id="dfp-reset" type="button">Reset</button></div>
+        </div>
+        <div class="challenge-panel">
+          <div class="output" id="dfp-output" role="status" aria-live="polite">Waiting for proof…</div>
+          <div class="flag hidden" id="dfp-flag" aria-label="Claimed flag"></div>
+        </div>
+      </div>
+    `);
+    const raw = document.getElementById('dfp-raw'), out = document.getElementById('dfp-output'), flagEl = document.getElementById('dfp-flag'), proofEl = document.getElementById('dfp-proof'), bodyEl = document.getElementById('dfp-body');
+    function write(m, k) { out.classList.remove('ok', 'bad'); if (k) out.classList.add(k); out.textContent = m; }
+    function showFlag(f) { flagEl.textContent = f; flagEl.classList.remove('hidden'); }
+    function hideFlag() { flagEl.textContent = ''; flagEl.classList.add('hidden'); }
+    document.getElementById('dfp-info')?.addEventListener('click', async () => {
+      const qs = new URLSearchParams({ seed: ctx.runtimeState.artifact_seed });
+      try { const resp = await fetch('/api/drone-flight-path?' + qs, { credentials: 'omit', cache: 'no-store' }); const data = await resp.json().catch(() => null); raw.textContent = JSON.stringify(data, null, 2); write('Info loaded.', 'ok'); } catch (e) { write('Error: ' + e.message, 'bad'); }
+    });
+    document.getElementById('dfp-send')?.addEventListener('click', async () => {
+      const qs = new URLSearchParams({ seed: ctx.runtimeState.artifact_seed });
+      const bodyStr = (bodyEl.value || '').trim();
+      try { const resp = await fetch('/api/drone-flight-path?' + qs, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: bodyStr, credentials: 'omit', cache: 'no-store' }); const data = await resp.json().catch(() => null); raw.textContent = JSON.stringify(data, null, 2); write(resp.ok ? (data?.access === 'ADMIN' ? 'ADMIN access granted!' : 'Standard access.') : 'Error: ' + (data?.error || resp.status), resp.ok ? 'ok' : 'bad'); } catch (e) { write('Error: ' + e.message, 'bad'); }
+    });
+    document.getElementById('dfp-claim')?.addEventListener('click', () => { const v = (proofEl.value || '').trim(); if (!v) { write('Paste proof first.', 'bad'); return; } hideFlag(); (async () => { try { const flag = await claimFlag(ctx.launchToken, v, ctx.runtimeSlug); write('Flag claimed.', 'ok'); showFlag(flag); } catch (e) { write('Claim failed: ' + e.message, 'bad'); } })(); });
+    document.getElementById('dfp-reset')?.addEventListener('click', () => { proofEl.value = ''; raw.textContent = '(no data yet)'; hideFlag(); write('Waiting for proof…'); });
+  }
+
+  // ==========================================================================
+  // SDG 9 HARD CHALLENGES
+  // ==========================================================================
+
+  function renderChemicalPlantChallenge(ctx) {
+    setChallengeSurface(`
+      ${renderChallengeHeader(ctx.runtimeSlug, 'Chemical Plant', 'SDG 9 — SCADA interface with rolling XOR encryption. Reverse the key and forge a command.')}
+      <div class="challenge-panel" style="background: var(--color-accent-glow); border: 1px solid var(--color-accent); margin-bottom: 18px;">
+        <strong>Description:</strong> The plant control system encrypts commands with a rolling XOR key. You are given a known plaintext/ciphertext pair. Recover the key stream and encrypt the emergency command to gain diagnostic access.
+      </div>
+      <div class="challenge-panel">
+        <p class="help">Hints: XOR is its own inverse. The key mutates every 4 bytes via an LFSR step. Use the "keyhint" action for a longer sample.</p>
+        <div class="actions">
+          <button class="button secondary" id="cp-status" type="button">Get Status + Sample</button>
+          <button class="button secondary" id="cp-keyhint" type="button">Get Key Hint</button>
+        </div>
+        <div class="field" style="margin-top:12px;">
+          <label class="label" for="cp-payload">Encrypted Command (hex)</label>
+          <input class="input" id="cp-payload" placeholder="hex-encoded encrypted EMERGENCY_DUMP" autocomplete="off" />
+        </div>
+        <div class="actions"><button class="button secondary" id="cp-send" type="button">Send Command (POST)</button></div>
+        <pre class="code-block" id="cp-raw">(no data yet)</pre>
+      </div>
+      <div class="divider"></div>
+      <div class="challenge-grid">
+        <div class="challenge-panel">
+          <div class="field"><label class="label" for="cp-proof">Proof code</label><input class="input" id="cp-proof" placeholder="32 hex characters" autocomplete="off" /></div>
+          <div class="actions"><button class="button" id="cp-claim" type="button">Claim flag</button><button class="button secondary" id="cp-reset" type="button">Reset</button></div>
+        </div>
+        <div class="challenge-panel">
+          <div class="output" id="cp-output" role="status" aria-live="polite">Waiting for proof…</div>
+          <div class="flag hidden" id="cp-flag" aria-label="Claimed flag"></div>
+        </div>
+      </div>
+    `);
+    const raw = document.getElementById('cp-raw'), out = document.getElementById('cp-output'), flagEl = document.getElementById('cp-flag'), proofEl = document.getElementById('cp-proof'), payloadEl = document.getElementById('cp-payload');
+    function write(m, k) { out.classList.remove('ok', 'bad'); if (k) out.classList.add(k); out.textContent = m; }
+    function showFlag(f) { flagEl.textContent = f; flagEl.classList.remove('hidden'); }
+    function hideFlag() { flagEl.textContent = ''; flagEl.classList.add('hidden'); }
+    async function apiGet(action) { const qs = new URLSearchParams({ seed: ctx.runtimeState.artifact_seed, action }); try { const resp = await fetch('/api/chemical-plant?' + qs, { credentials: 'omit', cache: 'no-store' }); const data = await resp.json().catch(() => null); raw.textContent = JSON.stringify(data, null, 2); write('Response received.', 'ok'); } catch (e) { write('Error: ' + e.message, 'bad'); } }
+    document.getElementById('cp-status')?.addEventListener('click', () => apiGet('status'));
+    document.getElementById('cp-keyhint')?.addEventListener('click', () => apiGet('keyhint'));
+    document.getElementById('cp-send')?.addEventListener('click', async () => {
+      const p = (payloadEl.value || '').trim(); if (!p) { write('Enter payload.', 'bad'); return; }
+      const qs = new URLSearchParams({ seed: ctx.runtimeState.artifact_seed, action: 'command' });
+      try { const resp = await fetch('/api/chemical-plant?' + qs, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ payload: p }), credentials: 'omit', cache: 'no-store' }); const data = await resp.json().catch(() => null); raw.textContent = JSON.stringify(data, null, 2); write(resp.ok ? 'Command accepted!' : 'Rejected: ' + (data?.error || resp.status), resp.ok ? 'ok' : 'bad'); } catch (e) { write('Error: ' + e.message, 'bad'); }
+    });
+    document.getElementById('cp-claim')?.addEventListener('click', () => { const v = (proofEl.value || '').trim(); if (!v) { write('Paste proof first.', 'bad'); return; } hideFlag(); (async () => { try { const flag = await claimFlag(ctx.launchToken, v, ctx.runtimeSlug); write('Flag claimed.', 'ok'); showFlag(flag); } catch (e) { write('Claim failed: ' + e.message, 'bad'); } })(); });
+    document.getElementById('cp-reset')?.addEventListener('click', () => { proofEl.value = ''; payloadEl.value = ''; raw.textContent = '(no data yet)'; hideFlag(); write('Waiting for proof…'); });
+  }
+
+  function renderSatelliteUplinkChallenge(ctx) {
+    setChallengeSurface(`
+      ${renderChallengeHeader(ctx.runtimeSlug, 'Satellite Uplink', 'SDG 9 — Satellite communication terminal with a custom binary protocol. Craft a valid admin packet.')}
+      <div class="challenge-panel" style="background: var(--color-accent-glow); border: 1px solid var(--color-accent); margin-bottom: 18px;">
+        <strong>Description:</strong> The uplink accepts hex-encoded binary packets with a specific structure: magic bytes, version, command, payload, and checksum. Craft a packet with CMD=0x42 and the correct authorization payload to dump admin data.
+      </div>
+      <div class="challenge-panel">
+        <p class="help">Hints: Start with the info endpoint to see the protocol spec and a sample packet. Reverse-engineer the sample, then build your own admin packet with a valid checksum.</p>
+        <div class="actions"><button class="button secondary" id="su-info" type="button">Protocol Info</button></div>
+        <div class="field" style="margin-top:12px;">
+          <label class="label" for="su-packet">Binary Packet (hex)</label>
+          <input class="input" id="su-packet" placeholder="hex-encoded packet" autocomplete="off" />
+        </div>
+        <div class="actions"><button class="button secondary" id="su-send" type="button">Send Packet (POST)</button></div>
+        <pre class="code-block" id="su-raw">(no data yet)</pre>
+      </div>
+      <div class="divider"></div>
+      <div class="challenge-grid">
+        <div class="challenge-panel">
+          <div class="field"><label class="label" for="su-proof">Proof code</label><input class="input" id="su-proof" placeholder="32 hex characters" autocomplete="off" /></div>
+          <div class="actions"><button class="button" id="su-claim" type="button">Claim flag</button><button class="button secondary" id="su-reset" type="button">Reset</button></div>
+        </div>
+        <div class="challenge-panel">
+          <div class="output" id="su-output" role="status" aria-live="polite">Waiting for proof…</div>
+          <div class="flag hidden" id="su-flag" aria-label="Claimed flag"></div>
+        </div>
+      </div>
+    `);
+    const raw = document.getElementById('su-raw'), out = document.getElementById('su-output'), flagEl = document.getElementById('su-flag'), proofEl = document.getElementById('su-proof'), packetEl = document.getElementById('su-packet');
+    function write(m, k) { out.classList.remove('ok', 'bad'); if (k) out.classList.add(k); out.textContent = m; }
+    function showFlag(f) { flagEl.textContent = f; flagEl.classList.remove('hidden'); }
+    function hideFlag() { flagEl.textContent = ''; flagEl.classList.add('hidden'); }
+    document.getElementById('su-info')?.addEventListener('click', async () => { const qs = new URLSearchParams({ seed: ctx.runtimeState.artifact_seed, action: 'info' }); try { const resp = await fetch('/api/satellite-uplink?' + qs, { credentials: 'omit', cache: 'no-store' }); const data = await resp.json().catch(() => null); raw.textContent = JSON.stringify(data, null, 2); write('Protocol info loaded.', 'ok'); } catch (e) { write('Error: ' + e.message, 'bad'); } });
+    document.getElementById('su-send')?.addEventListener('click', async () => {
+      const p = (packetEl.value || '').trim(); if (!p) { write('Enter packet hex.', 'bad'); return; }
+      const qs = new URLSearchParams({ seed: ctx.runtimeState.artifact_seed, action: 'send' });
+      try { const resp = await fetch('/api/satellite-uplink?' + qs, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ packet: p }), credentials: 'omit', cache: 'no-store' }); const data = await resp.json().catch(() => null); raw.textContent = JSON.stringify(data, null, 2); write(resp.ok ? 'Packet accepted!' : 'Rejected: ' + (data?.error || resp.status), resp.ok ? 'ok' : 'bad'); } catch (e) { write('Error: ' + e.message, 'bad'); }
+    });
+    document.getElementById('su-claim')?.addEventListener('click', () => { const v = (proofEl.value || '').trim(); if (!v) { write('Paste proof first.', 'bad'); return; } hideFlag(); (async () => { try { const flag = await claimFlag(ctx.launchToken, v, ctx.runtimeSlug); write('Flag claimed.', 'ok'); showFlag(flag); } catch (e) { write('Claim failed: ' + e.message, 'bad'); } })(); });
+    document.getElementById('su-reset')?.addEventListener('click', () => { proofEl.value = ''; packetEl.value = ''; raw.textContent = '(no data yet)'; hideFlag(); write('Waiting for proof…'); });
+  }
+
+  function renderBioLabAirlockChallenge(ctx) {
+    setChallengeSurface(`
+      ${renderChallengeHeader(ctx.runtimeSlug, 'Bio-Lab Airlock', 'SDG 9 — Specimen database with blind extraction. Discover a hidden field and extract its value.')}
+      <div class="challenge-panel" style="background: var(--color-accent-glow); border: 1px solid var(--color-accent); margin-bottom: 18px;">
+        <strong>Description:</strong> The specimen database has a documented schema, but one record contains an undocumented field with a randomized name. The field's value is the proof. Use NoSQL-style operators to discover the field name, identify which record has it, and extract the value character by character.
+      </div>
+      <div class="challenge-panel">
+        <p class="help">Hints: Use ?action=fields to list all field names. Use $exists in queries to find which record has the field. Use the "extract" action with regex to test the value character by character.</p>
+        <div class="actions">
+          <button class="button secondary" id="bla-schema" type="button">Schema</button>
+          <button class="button secondary" id="bla-fields" type="button">All Fields</button>
+        </div>
+        <div class="field" style="margin-top:12px;">
+          <label class="label" for="bla-query">Query Filter JSON</label>
+          <textarea class="input" id="bla-query" rows="3" spellcheck="false">{"biosafety_level": {"$gte": 3}}</textarea>
+        </div>
+        <div class="actions"><button class="button secondary" id="bla-qsend" type="button">Query (POST)</button></div>
+        <div class="divider"></div>
+        <p class="surface-note">Blind Extraction</p>
+        <div class="field"><label class="label" for="bla-rid">Record ID</label><input class="input" id="bla-rid" value="BIO-005" autocomplete="off" /></div>
+        <div class="field"><label class="label" for="bla-regex">Regex pattern</label><input class="input" id="bla-regex" placeholder="^[0-9a-f]" autocomplete="off" /></div>
+        <div class="actions"><button class="button secondary" id="bla-extract" type="button">Test Regex</button></div>
+        <pre class="code-block" id="bla-raw">(no data yet)</pre>
+      </div>
+      <div class="divider"></div>
+      <div class="challenge-grid">
+        <div class="challenge-panel">
+          <div class="field"><label class="label" for="bla-proof">Proof code</label><input class="input" id="bla-proof" placeholder="32 hex characters" autocomplete="off" /></div>
+          <div class="actions"><button class="button" id="bla-claim" type="button">Claim flag</button><button class="button secondary" id="bla-reset" type="button">Reset</button></div>
+        </div>
+        <div class="challenge-panel">
+          <div class="output" id="bla-output" role="status" aria-live="polite">Waiting for proof…</div>
+          <div class="flag hidden" id="bla-flag" aria-label="Claimed flag"></div>
+        </div>
+      </div>
+    `);
+    const raw = document.getElementById('bla-raw'), out = document.getElementById('bla-output'), flagEl = document.getElementById('bla-flag'), proofEl = document.getElementById('bla-proof');
+    function write(m, k) { out.classList.remove('ok', 'bad'); if (k) out.classList.add(k); out.textContent = m; }
+    function showFlag(f) { flagEl.textContent = f; flagEl.classList.remove('hidden'); }
+    function hideFlag() { flagEl.textContent = ''; flagEl.classList.add('hidden'); }
+    async function apiGet(action) { const qs = new URLSearchParams({ seed: ctx.runtimeState.artifact_seed, action }); try { const resp = await fetch('/api/bio-lab-airlock?' + qs, { credentials: 'omit', cache: 'no-store' }); const data = await resp.json().catch(() => null); raw.textContent = JSON.stringify(data, null, 2); write('Response received.', 'ok'); } catch (e) { write('Error: ' + e.message, 'bad'); } }
+    document.getElementById('bla-schema')?.addEventListener('click', () => apiGet('schema'));
+    document.getElementById('bla-fields')?.addEventListener('click', () => apiGet('fields'));
+    document.getElementById('bla-qsend')?.addEventListener('click', async () => {
+      const q = (document.getElementById('bla-query').value || '').trim();
+      const qs = new URLSearchParams({ seed: ctx.runtimeState.artifact_seed, action: 'query' });
+      try { const resp = await fetch('/api/bio-lab-airlock?' + qs, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ filter: JSON.parse(q) }), credentials: 'omit', cache: 'no-store' }); const data = await resp.json().catch(() => null); raw.textContent = JSON.stringify(data, null, 2); write('Query returned ' + (data?.count || 0) + ' results.', 'ok'); } catch (e) { write('Error: ' + e.message, 'bad'); }
+    });
+    document.getElementById('bla-extract')?.addEventListener('click', async () => {
+      const rid = (document.getElementById('bla-rid').value || '').trim();
+      const regex = (document.getElementById('bla-regex').value || '').trim();
+      if (!rid || !regex) { write('Enter record ID and regex.', 'bad'); return; }
+      const qs = new URLSearchParams({ seed: ctx.runtimeState.artifact_seed, action: 'extract' });
+      try { const resp = await fetch('/api/bio-lab-airlock?' + qs, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ record_id: rid, regex }), credentials: 'omit', cache: 'no-store' }); const data = await resp.json().catch(() => null); raw.textContent = JSON.stringify(data, null, 2); write(data?.match ? 'MATCH: regex matched!' : 'NO MATCH.', data?.match ? 'ok' : 'bad'); } catch (e) { write('Error: ' + e.message, 'bad'); }
+    });
+    document.getElementById('bla-claim')?.addEventListener('click', () => { const v = (proofEl.value || '').trim(); if (!v) { write('Paste proof first.', 'bad'); return; } hideFlag(); (async () => { try { const flag = await claimFlag(ctx.launchToken, v, ctx.runtimeSlug); write('Flag claimed.', 'ok'); showFlag(flag); } catch (e) { write('Claim failed: ' + e.message, 'bad'); } })(); });
+    document.getElementById('bla-reset')?.addEventListener('click', () => { proofEl.value = ''; raw.textContent = '(no data yet)'; hideFlag(); write('Waiting for proof…'); });
+  }
+
+  function renderAiOptimizerChallenge(ctx) {
+    setChallengeSurface(`
+      ${renderChallengeHeader(ctx.runtimeSlug, 'AI Optimizer', 'SDG 9 — Neural network infrastructure optimizer. Reverse the model to find the magic input.')}
+      <div class="challenge-panel" style="background: var(--color-accent-glow); border: 1px solid var(--color-accent); margin-bottom: 18px;">
+        <strong>Description:</strong> A 2-layer neural network (4→4 ReLU → 1 linear) predicts infrastructure efficiency. You are given the weights, biases, and a target output value. Find an integer input vector [a,b,c,d] that produces exactly the target output.
+      </div>
+      <div class="challenge-panel">
+        <p class="help">Hints: Dump the model weights. Understand which hidden neurons activate (ReLU). Solve the resulting system of linear equations. Try brute-forcing small integer ranges if algebra is difficult.</p>
+        <div class="actions">
+          <button class="button secondary" id="aio-info" type="button">Info</button>
+          <button class="button secondary" id="aio-model" type="button">Dump Model</button>
+        </div>
+        <div class="field" style="margin-top:12px;">
+          <label class="label" for="aio-input">Input Vector [a,b,c,d]</label>
+          <input class="input" id="aio-input" placeholder="e.g. [1, 2, -3, 4]" autocomplete="off" />
+        </div>
+        <div class="actions"><button class="button secondary" id="aio-infer" type="button">Run Inference (POST)</button></div>
+        <pre class="code-block" id="aio-raw">(no data yet)</pre>
+      </div>
+      <div class="divider"></div>
+      <div class="challenge-grid">
+        <div class="challenge-panel">
+          <div class="field"><label class="label" for="aio-proof">Proof code</label><input class="input" id="aio-proof" placeholder="32 hex characters" autocomplete="off" /></div>
+          <div class="actions"><button class="button" id="aio-claim" type="button">Claim flag</button><button class="button secondary" id="aio-reset" type="button">Reset</button></div>
+        </div>
+        <div class="challenge-panel">
+          <div class="output" id="aio-output" role="status" aria-live="polite">Waiting for proof…</div>
+          <div class="flag hidden" id="aio-flag" aria-label="Claimed flag"></div>
+        </div>
+      </div>
+    `);
+    const raw = document.getElementById('aio-raw'), out = document.getElementById('aio-output'), flagEl = document.getElementById('aio-flag'), proofEl = document.getElementById('aio-proof'), inputEl = document.getElementById('aio-input');
+    function write(m, k) { out.classList.remove('ok', 'bad'); if (k) out.classList.add(k); out.textContent = m; }
+    function showFlag(f) { flagEl.textContent = f; flagEl.classList.remove('hidden'); }
+    function hideFlag() { flagEl.textContent = ''; flagEl.classList.add('hidden'); }
+    async function apiGet(action) { const qs = new URLSearchParams({ seed: ctx.runtimeState.artifact_seed, action }); try { const resp = await fetch('/api/ai-optimizer?' + qs, { credentials: 'omit', cache: 'no-store' }); const data = await resp.json().catch(() => null); raw.textContent = JSON.stringify(data, null, 2); write('Response received.', 'ok'); } catch (e) { write('Error: ' + e.message, 'bad'); } }
+    document.getElementById('aio-info')?.addEventListener('click', () => apiGet('info'));
+    document.getElementById('aio-model')?.addEventListener('click', () => apiGet('model'));
+    document.getElementById('aio-infer')?.addEventListener('click', async () => {
+      const v = (inputEl.value || '').trim(); let arr; try { arr = JSON.parse(v); } catch { write('Invalid JSON array.', 'bad'); return; }
+      if (!Array.isArray(arr) || arr.length !== 4) { write('Must be [a,b,c,d].', 'bad'); return; }
+      const qs = new URLSearchParams({ seed: ctx.runtimeState.artifact_seed, action: 'infer' });
+      try { const resp = await fetch('/api/ai-optimizer?' + qs, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ input: arr }), credentials: 'omit', cache: 'no-store' }); const data = await resp.json().catch(() => null); raw.textContent = JSON.stringify(data, null, 2); write(data?.match ? 'TARGET MATCHED!' : 'Output=' + data?.output + ' (target=' + data?.target + ', diff=' + data?.difference + ')', data?.match ? 'ok' : 'bad'); } catch (e) { write('Error: ' + e.message, 'bad'); }
+    });
+    document.getElementById('aio-claim')?.addEventListener('click', () => { const v = (proofEl.value || '').trim(); if (!v) { write('Paste proof first.', 'bad'); return; } hideFlag(); (async () => { try { const flag = await claimFlag(ctx.launchToken, v, ctx.runtimeSlug); write('Flag claimed.', 'ok'); showFlag(flag); } catch (e) { write('Claim failed: ' + e.message, 'bad'); } })(); });
+    document.getElementById('aio-reset')?.addEventListener('click', () => { proofEl.value = ''; inputEl.value = ''; raw.textContent = '(no data yet)'; hideFlag(); write('Waiting for proof…'); });
+  }
+
   const CHALLENGES = Object.freeze({
     // Default module if slug is unknown
     demo: renderDemoChallenge,
-    // Static challenges
+    // SDG 15 challenges
     'hidden-in-plain-sight': renderHiddenInPlainSightChallenge,
     'save-the-species': renderSaveTheSpeciesChallenge,
     'endangered-access': renderEndangeredAccessChallenge,
     'illegal-logging-network': renderIllegalLoggingNetworkChallenge,
     'poacher-supply-chain': renderPoacherSupplyChainChallenge,
     'ranger-risk-engine': renderRangerRiskEngineChallenge,
+    // SDG 9 Easy
+    'factory-maintenance': renderFactoryMaintenanceChallenge,
+    'supply-chain-map': renderSupplyChainMapChallenge,
+    'legacy-modem': renderLegacyModemChallenge,
+    // SDG 9 Medium
+    'iot-dashboard': renderIotDashboardChallenge,
+    'smart-city-grid': renderSmartCityGridChallenge,
+    'drone-flight-path': renderDroneFlightPathChallenge,
+    // SDG 9 Hard
+    'chemical-plant': renderChemicalPlantChallenge,
+    'satellite-uplink': renderSatelliteUplinkChallenge,
+    'bio-lab-airlock': renderBioLabAirlockChallenge,
+    'ai-optimizer': renderAiOptimizerChallenge,
   });
 
   // ==========================================================================
@@ -1305,14 +1835,14 @@
   function parseRoute() {
     const path = window.location.pathname;
     const match = path.match(/^\/r\/([^/]+)\/([^/]+)\/?$/);
-    
+
     if (match) {
       return {
         contestId: match[1],
         runtimeSlug: match[2],
       };
     }
-    
+
     return null;
   }
 
@@ -1556,8 +2086,8 @@
       const topKeys = Object.keys(data).slice(0, 12).join(', ');
       throw new Error(
         'Claim accepted (correct=true) but backend did not return a flag. ' +
-          'Update claim-runtime-flag to return `{ flag: "SDG{...}" }`.' +
-          (topKeys ? ` (top keys: ${topKeys})` : '')
+        'Update claim-runtime-flag to return `{ flag: "SDG{...}" }`.' +
+        (topKeys ? ` (top keys: ${topKeys})` : '')
       );
     }
 
@@ -1580,8 +2110,8 @@
 
       throw new Error(
         'Invalid response: missing flag' +
-          (topKeys ? ` (top keys: ${topKeys})` : '') +
-          (dataKeys ? ` (data keys: ${dataKeys})` : '')
+        (topKeys ? ` (top keys: ${topKeys})` : '') +
+        (dataKeys ? ` (data keys: ${dataKeys})` : '')
       );
     }
 
@@ -1600,7 +2130,7 @@
 
     // Extract token from URL
     const token = getTokenFromURL();
-    
+
     if (!token) {
       showError(
         'Missing Token',
