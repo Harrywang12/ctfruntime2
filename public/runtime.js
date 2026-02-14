@@ -116,7 +116,8 @@
     // NOTE: This demo intentionally avoids relying on artifact_seed.
     // artifact_seed can be obtained by players (redeem endpoint), so any
     // solve-critical material must be validated server-side.
-    const pseudoSeed = `${ctx.runtimeState.team_id}:${ctx.runtimeState.challenge_id}`;
+    const seedSource = ctx.runtimeState.team_id || ctx.runtimeState.artifact_seed || 'anon';
+    const pseudoSeed = `${seedSource}:${ctx.runtimeState.challenge_id}`;
 
     const userId = simpleHash(pseudoSeed, 'user_id') % 10000;
     const userName = 'user_' + deriveHex(pseudoSeed, 'username', 6);
@@ -1948,7 +1949,7 @@
     // Display masked IDs (never show raw artifact_seed in UI)
     elements.infoContest.textContent = runtimeState.contest_id ? maskUUID(runtimeState.contest_id) : 'PRACTICE';
     elements.infoChallenge.textContent = maskUUID(runtimeState.challenge_id);
-    elements.infoTeam.textContent = maskUUID(runtimeState.team_id);
+    elements.infoTeam.textContent = runtimeState.team_id ? maskUUID(runtimeState.team_id) : 'ANON';
 
     // Render the challenge surface selected by runtimeSlug
     renderChallengeSurface(runtimeState, route, launchToken);
@@ -2012,7 +2013,7 @@
     const data = await response.json();
 
     // Validate required fields in response
-    const requiredFields = ['contest_id', 'challenge_id', 'team_id', 'artifact_seed'];
+    const requiredFields = ['contest_id', 'challenge_id', 'artifact_seed'];
     for (const field of requiredFields) {
       if (!data[field]) {
         throw new Error(`Invalid response: missing ${field}`);
@@ -2163,7 +2164,7 @@
       window.__SDG_RUNTIME = Object.freeze({
         contest_id: runtimeState.contest_id || null,
         challenge_id: runtimeState.challenge_id,
-        team_id: runtimeState.team_id,
+        team_id: runtimeState.team_id || null,
       });
 
       // Show success UI
