@@ -2012,8 +2012,9 @@
 
     const data = await response.json();
 
-    // Validate required fields in response
-    const requiredFields = ['contest_id', 'challenge_id', 'artifact_seed'];
+    // Validate required fields in response.
+    // contest_id and team_id may be null in practice mode.
+    const requiredFields = ['challenge_id', 'artifact_seed'];
     for (const field of requiredFields) {
       if (!data[field]) {
         throw new Error(`Invalid response: missing ${field}`);
