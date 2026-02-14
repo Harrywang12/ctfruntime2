@@ -8,8 +8,9 @@
  * 3. Storing the runtime state in window.__SDG_RUNTIME
  * 4. Rendering the challenge surface with derived state
  * 
- * Expected URL format:
- *   https://challenges.sdgctf.com/r/:contestId/:runtimeSlug?token=<launch_token>
+ * Expected URL formats:
+ *   https://challenges.sdgctf.com/r/:contestId/:runtimeSlug?token=<launch_token>  (contest)
+ *   https://challenges.sdgctf.com/r/:runtimeSlug?token=<launch_token>              (practice)
  * 
  * Security notes:
  * - This runtime has NO access to main-site authentication
@@ -1830,16 +1831,28 @@
 
   /**
    * Parse URL path to extract route parameters.
-   * Expected format: /r/:contestId/:runtimeSlug
+   * Supported formats:
+   *   /r/:contestId/:runtimeSlug   (contest challenges)
+   *   /r/:runtimeSlug              (practice challenges — no contest)
    */
   function parseRoute() {
     const path = window.location.pathname;
-    const match = path.match(/^\/r\/([^/]+)\/([^/]+)\/?$/);
 
-    if (match) {
+    // Try contest format first: /r/:contestId/:runtimeSlug
+    const contestMatch = path.match(/^\/r\/([^/]+)\/([^/]+)\/?$/);
+    if (contestMatch) {
       return {
-        contestId: match[1],
-        runtimeSlug: match[2],
+        contestId: contestMatch[1],
+        runtimeSlug: contestMatch[2],
+      };
+    }
+
+    // Try practice format: /r/:runtimeSlug (no contest ID)
+    const practiceMatch = path.match(/^\/r\/([^/]+)\/?$/);
+    if (practiceMatch) {
+      return {
+        contestId: null,
+        runtimeSlug: practiceMatch[1],
       };
     }
 
@@ -1933,7 +1946,7 @@
     elements.runtimeInfo.classList.remove('hidden');
 
     // Display masked IDs (never show raw artifact_seed in UI)
-    elements.infoContest.textContent = maskUUID(runtimeState.contest_id);
+    elements.infoContest.textContent = runtimeState.contest_id ? maskUUID(runtimeState.contest_id) : 'PRACTICE';
     elements.infoChallenge.textContent = maskUUID(runtimeState.challenge_id);
     elements.infoTeam.textContent = maskUUID(runtimeState.team_id);
 
@@ -2148,7 +2161,7 @@
       // Freeze and store the runtime state globally
       // This allows challenge-specific code to access the state
       window.__SDG_RUNTIME = Object.freeze({
-        contest_id: runtimeState.contest_id,
+        contest_id: runtimeState.contest_id || null,
         challenge_id: runtimeState.challenge_id,
         team_id: runtimeState.team_id,
       });

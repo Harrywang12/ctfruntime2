@@ -7,8 +7,10 @@
   and is used ONLY to host intentionally vulnerable challenge experiences.
   
   Integration:
-  - The main contest site launches challenges by opening:
+  - Contest challenges are launched by opening:
       https://challenges.sdgctf.com/r/:contestId/:runtimeSlug?token=<launch_token>
+  - Practice challenges (no contest) are launched by opening:
+      https://challenges.sdgctf.com/r/:runtimeSlug?token=<launch_token>
   - The launch_token is a one-time token that authorizes this runtime session.
   - This runtime has NO access to main-site authentication or cookies.
   
@@ -18,6 +20,7 @@
   - The runtime operates under a strict CSP and never handles auth cookies.
 -->
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -25,6 +28,7 @@
   <title>SDG CTF - Challenge Runtime</title>
   <link rel="stylesheet" href="/runtime.css">
 </head>
+
 <body>
   <div class="bg-grid" aria-hidden="true"></div>
   <div class="bg-scanlines" aria-hidden="true"></div>
@@ -32,7 +36,8 @@
   <main class="shell" aria-label="Challenge runtime">
     <header class="topbar" role="banner">
       <div class="brand">
-        <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter" aria-hidden="true" focusable="false">
+        <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="square" stroke-linejoin="miter" aria-hidden="true" focusable="false">
           <path d="M4 7l8-4 8 4-8 4-8-4z"></path>
           <path d="M4 17l8 4 8-4"></path>
           <path d="M4 12l8 4 8-4"></path>
@@ -99,7 +104,9 @@
         </div>
 
         <div id="status-panel" class="status-panel" role="status" aria-live="polite">
-          <div class="status-icon" id="status-icon"><div class="spinner"></div></div>
+          <div class="status-icon" id="status-icon">
+            <div class="spinner"></div>
+          </div>
           <div class="status-stack">
             <div class="status-text" id="status-text">Initializing…</div>
             <div class="status-sub">Booting sandbox components</div>
@@ -114,7 +121,8 @@
 
         <div id="error-panel" class="error-panel hidden" role="alert">
           <div class="error-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"
+              stroke-linejoin="miter">
               <path d="M12 2l10 10-10 10L2 12 12 2z"></path>
               <path d="M12 7v6"></path>
               <path d="M12 16h.01"></path>
@@ -134,4 +142,5 @@
 
   <script type="module" src="/runtime.js"></script>
 </body>
+
 </html>
