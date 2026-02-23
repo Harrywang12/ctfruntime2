@@ -1,10 +1,4 @@
-// Vercel Serverless Function
-// SDG 9 Medium: Drone Flight Path
-// Prototype pollution vulnerability: the API accepts a JSON flight plan body
-// and merges it into the drone state object using a naive deep merge.
-// If the user sends "__proto__": { "isAdmin": true } in the flight plan,
-// it pollutes Object.prototype and the subsequent admin check passes,
-// revealing the proof.
+
 
 const { computeProof } = require('./_runtimeCrypto');
 

@@ -1,9 +1,4 @@
-// Vercel Serverless Function
-// SDG 9 Medium: Smart City Grid
-// Weak signature verification: the API requires a signature that is
-// md5(timestamp + shared_secret). A "debug" endpoint leaks the timestamp
-// and the first 6 chars of the secret. The secret is only 8 hex chars long,
-// so the remaining 2 chars (256 possibilities) can be brute-forced easily.
+
 
 const crypto = require('crypto');
 const { computeProof } = require('./_runtimeCrypto');

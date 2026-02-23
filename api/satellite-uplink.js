@@ -1,15 +1,3 @@
-// Vercel Serverless Function
-// SDG 9 Hard: Satellite Uplink
-// Multi-layered challenge:
-// 1. The API accepts a hex-encoded binary "packet" with a custom protocol:
-//    [MAGIC: 4 bytes "SAT9"] [VERSION: 1 byte] [CMD: 1 byte]
-//    [PAYLOAD_LEN: 2 bytes big-endian] [PAYLOAD: variable] [CHECKSUM: 2 bytes]
-// 2. Checksum = sum of all bytes before checksum, mod 65536, big-endian.
-// 3. CMD=0x01 is "query" (returns public data).
-//    CMD=0x42 is "admin_dump" (returns proof) — but only if the payload
-//    contains the magic string "GRANT_ACCESS" in the right position.
-// 4. Players must reverse-engineer the protocol from the docs/hints and
-//    a sample packet, then craft a valid admin packet with correct checksum.
 
 const { computeProof } = require('./_runtimeCrypto');
 

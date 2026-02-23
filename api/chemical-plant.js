@@ -1,13 +1,3 @@
-// Vercel Serverless Function
-// SDG 9 Hard: Chemical Plant
-// Multi-layered challenge:
-// 1. GET ?action=status returns an "encrypted" status string (XOR with a rolling key)
-//    AND a plaintext version. Player can XOR them to recover the key.
-// 2. Player must then encrypt the command "EMERGENCY_DUMP" with the same rolling key
-//    and send it via POST ?action=command&payload=<hex>.
-// 3. The key is derived from the seed, so it's deterministic per team.
-// 4. Additional layer: the key rotates every 4 bytes using a simple LFSR-like step,
-//    so players must figure out the rotation pattern.
 
 const { computeProof } = require('./_runtimeCrypto');
 

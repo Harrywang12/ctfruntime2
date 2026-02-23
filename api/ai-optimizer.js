@@ -1,17 +1,3 @@
-// Vercel Serverless Function
-// SDG 9 Hard: AI Optimizer
-// Multi-layered challenge:
-// 1. The API exposes a "neural network inference" endpoint that takes a
-//    4-element input vector [a, b, c, d] and returns an "efficiency score".
-// 2. A "model dump" endpoint exposes the weights and biases of the network.
-// 3. Layer 1: weights W1 (4x4 matrix) + bias b1 (4-vector) → ReLU
-//    Layer 2: weights W2 (4x1 vector) + bias b2 (scalar) → output
-// 4. The challenge: find an input vector where the output is EXACTLY
-//    the "magic number" (derived from seed). If it matches, the API returns
-//    the proof.
-// 5. To solve: reverse the network math. Since ReLU(x) = max(0,x), players
-//    need to figure out which neurons are active and solve the linear system.
-// 6. Additional twist: the weights are floating point, requiring careful math.
 
 const { computeProof } = require('./_runtimeCrypto');
 

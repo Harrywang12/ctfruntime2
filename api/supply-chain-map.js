@@ -1,8 +1,3 @@
-// Vercel Serverless Function
-// SDG 9 Easy: Supply Chain Map
-// Returns a list of supply chain routes. One route marked "classified" carries
-// the proof in a nested field that the frontend deliberately does NOT render.
-// Players must inspect the raw JSON response.
 
 const { computeProof } = require('./_runtimeCrypto');
 

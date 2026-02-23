@@ -35,6 +35,7 @@
   --radius-lg: 0px;
   --cut: 10px;
   --font-mono: ui-monospace, 'SF Mono', 'Cascadia Code', 'Segoe UI Mono', Menlo, Monaco, Consolas, monospace;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   --shadow-glow: 0 0 0 1px rgba(55, 255, 139, 0.12), 0 0 32px rgba(55, 255, 139, 0.06);
 }
 
@@ -43,13 +44,61 @@ html, body {
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  font-family: var(--font-sans);
   background: var(--color-bg);
   color: var(--color-text-primary);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
+  font-size: 14px; /* Base size */
+}
+
+/* Typography Utilities */
+.text-xl {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--color-text-primary);
+  margin-bottom: 8px;
+}
+
+.text-lg {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: 6px;
+}
+
+.text-base {
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.text-sm {
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.text-xs {
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+.text-muted {
+  color: var(--color-text-muted);
+}
+
+.text-secondary {
+  color: var(--color-text-secondary);
+}
+
+.text-accent {
+  color: var(--color-accent);
 }
 
 /* Background layers */
@@ -269,12 +318,6 @@ body {
   color: rgba(180, 214, 200, 0.78);
 }
 
-/* Back-compat classnames (kept if some challenge HTML references them) */
-.runtime-container { display: none; }
-.runtime-card { display: none; }
-.runtime-header { display: none; }
-.logo, .logo-icon, .logo-text, .runtime-badge { display: none; }
-
 /* Status Panel */
 .status-panel {
   display: grid;
@@ -348,38 +391,6 @@ body {
   display: none;
 }
 
-/* Legacy header removed (sidebar now shows metadata) */
-.info-title { display: none; }
-
-.info-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.info-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 14px;
-  background: var(--color-bg);
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--color-border);
-}
-
-.info-item dt {
-  font-size: 13px;
-  color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.info-item dd {
-  font-size: 13px;
-  font-family: var(--font-mono);
-  color: var(--color-text-secondary);
-}
-
 .divider {
   height: 1px;
   background: rgba(78, 255, 149, 0.12);
@@ -393,6 +404,10 @@ body {
   border: 1px solid rgba(78, 255, 149, 0.14);
   padding: 18px;
   box-shadow: inset 0 0 0 1px rgba(55, 255, 139, 0.05);
+  /* New Linear Flow */
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
 .surface-title {
@@ -453,9 +468,17 @@ body {
   border-left: 2px solid rgba(55, 255, 139, 0.75);
 }
 
-/* Challenge Modules */
+/* Challenge Modules & Linear Flow Sections */
+.challenge-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 .challenge-header {
-  margin-bottom: 16px;
+  margin-bottom: 8px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(78, 255, 149, 0.12);
 }
 
 .challenge-title-row {
@@ -467,7 +490,7 @@ body {
 }
 
 .challenge-title {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--color-text-primary);
   font-family: var(--font-mono);
@@ -475,7 +498,7 @@ body {
 }
 
 .challenge-subtitle {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--color-text-muted);
 }
 
@@ -533,13 +556,16 @@ body {
 
 .help {
   margin-top: 8px;
-  font-size: 11px;
-  color: var(--color-text-muted);
+  font-size: 12px;
+  color: var(--color-text-secondary);
 }
 
 .help code {
   font-family: var(--font-mono);
-  color: var(--color-text-secondary);
+  color: var(--color-text-primary);
+  background: rgba(255,255,255,0.05);
+  padding: 2px 4px;
+  border-radius: 2px;
 }
 
 .actions {
@@ -552,7 +578,7 @@ body {
   border: 1px solid rgba(78, 255, 149, 0.22);
   background: linear-gradient(135deg, rgba(55, 255, 139, 0.22), rgba(0, 208, 255, 0.12));
   color: rgba(235, 255, 247, 0.92);
-  padding: 10px 12px;
+  padding: 10px 14px;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -635,6 +661,91 @@ body {
   box-shadow: 0 0 0 1px rgba(0, 208, 255, 0.10), 0 0 22px rgba(0, 208, 255, 0.07);
 }
 
+/* Sequential Hints */
+.hints-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: rgba(10, 14, 20, 0.4);
+  border: 1px solid rgba(78, 255, 149, 0.12);
+  padding: 16px;
+}
+
+.hint-header {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-accent);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hint-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.hint-item {
+  position: relative;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 12px;
+  border-radius: 0px;
+  transition: all 0.2s ease;
+}
+
+.hint-item.locked {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.hint-item.visible {
+  border-color: rgba(55, 255, 139, 0.2);
+  background: rgba(55, 255, 139, 0.05);
+}
+
+.hint-content {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+.hint-blur {
+  filter: blur(5px);
+  user-select: none;
+  opacity: 0.5;
+  transition: filter 0.3s ease, opacity 0.3s ease;
+}
+
+.hint-reveal-btn {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 14, 20, 0.6);
+  cursor: pointer;
+  border: none;
+  color: var(--color-accent);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  z-index: 2;
+  transition: background 0.2s;
+}
+
+.hint-reveal-btn:hover {
+  background: rgba(10, 14, 20, 0.4);
+  color: #fff;
+}
+
 /* Static challenge helpers */
 .sdg-tag {
   display: inline-block;
@@ -659,15 +770,16 @@ body {
 
 .sdg-poster-title {
   margin: 0 0 6px 0;
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 600;
   color: var(--color-text-primary);
 }
 
 .sdg-poster-text {
   margin: 0;
-  font-size: 18px;
+  font-size: 15px;
   color: var(--color-text-secondary);
+  line-height: 1.6;
 }
 
 .sdg-poster-divider {

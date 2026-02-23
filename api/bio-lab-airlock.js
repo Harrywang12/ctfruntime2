@@ -1,20 +1,4 @@
-// Vercel Serverless Function
-// SDG 9 Hard: Bio-Lab Airlock
-// Multi-layered challenge simulating a NoSQL-like query interface:
-// 1. The "database" has sample records with public fields.
-// 2. One record has a hidden field whose KEY is randomized per seed
-//    (e.g., "sample_x8z1") and whose VALUE is the proof.
-// 3. Players can query with field filters. The system supports a
-//    "$regex" operator (intentional NoSQL injection surface).
-// 4. Step 1: Discover the hidden field name by using $regex on
-//    field names (the API has a "schema" action that lists fields,
-//    but the hidden field is excluded from the schema).
-// 5. Step 2: Use the "$exists" operator to confirm the field exists on
-//    a specific record.
-// 6. Step 3: Extract the value using "$regex" character-by-character
-//    (blind extraction), OR use a broad regex to match the whole value.
-// 7. To make it hard: the API rate-limits regex queries to 1 per second
-//    and doesn't echo the matched value in the response (only true/false).
+
 
 const { computeProof } = require('./_runtimeCrypto');
 

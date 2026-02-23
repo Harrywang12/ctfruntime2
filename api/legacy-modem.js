@@ -1,9 +1,4 @@
-// Vercel Serverless Function
-// SDG 9 Easy: Legacy Modem
-// Simulates a legacy modem admin interface that requires Basic Auth.
-// The password "infra2030" is hinted in the HTML page (in an HTML comment
-// and via a "default credentials" note). The username is "admin".
-// Correct auth returns the proof.
+
 
 const { computeProof } = require('./_runtimeCrypto');
 

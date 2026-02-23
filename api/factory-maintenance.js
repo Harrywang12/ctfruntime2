@@ -1,8 +1,3 @@
-// Vercel Serverless Function
-// SDG 9 Easy: Factory Maintenance
-// The proof is returned ONLY when the request uses HTTP method POST.
-// GET requests return a maintenance page but withhold the proof.
-// Hint in the GET response nudges users to try other methods.
 
 const { computeProof } = require('./_runtimeCrypto');
 

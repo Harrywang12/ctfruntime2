@@ -1,10 +1,4 @@
-// Vercel Serverless Function
-// SDG 9 Medium: IoT Dashboard
-// Parameter pollution vulnerability: if device_id appears twice in the query
-// string (e.g. ?device_id=sensor-1&device_id=admin), Node/Express will treat
-// it as an array. The code checks `device_id[0]` for authorization but uses
-// `device_id[device_id.length-1]` for the actual lookup, allowing access to
-// the "admin" device which carries the proof.
+
 
 const { computeProof } = require('./_runtimeCrypto');
 
