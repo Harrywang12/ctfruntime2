@@ -1,17 +1,17 @@
 /**
  * SDG CTF Challenge Runtime
  * =========================
- * 
+ *
  * This script initializes the challenge runtime by:
  * 1. Parsing the launch token from the URL query string
  * 2. Redeeming the token via the backend Edge Function
  * 3. Storing the runtime state in window.__SDG_RUNTIME
  * 4. Rendering the challenge surface with derived state
- * 
+ *
  * Expected URL formats:
  *   https://challenges.sdgctf.com/r/:contestId/:runtimeSlug?token=<launch_token>  (contest)
  *   https://challenges.sdgctf.com/r/:runtimeSlug?token=<launch_token>              (practice)
- * 
+ *
  * Security notes:
  * - This runtime has NO access to main-site authentication
  * - No cookies are sent or received (credentials: "omit")
@@ -20,7 +20,7 @@
  * - Proofs are derived server-side using a secret salt (PROOF_SECRET_SALT)
  * - Flags are derived server-side using a separate secret salt (FLAG_SECRET_SALT)
  * - Neither proofs nor flags can be computed client-side from artifact_seed
- * 
+ *
  * The actual vulnerable challenge surface should be built using artifact_seed
  * to create deterministic, per-team UI variations. All security-critical validation
  * (proof/flag derivation and verification) happens server-side only.
@@ -184,11 +184,11 @@
     setChallengeSurface(`
       <div class="challenge-section">
         ${renderChallengeHeader(ctx.runtimeSlug, 'Demo: Seeded Environment', 'A deterministic environment derived from your team/challenge seed.')}
-        
+
         <div class="challenge-panel">
           <div class="text-lg font-bold">Objective</div>
           <p class="text-base text-secondary mb-4">Verify that the environment is deterministic and unique to your team.</p>
-          
+
           <div class="text-lg font-bold">Description</div>
           <p class="text-base text-secondary">This is a demonstration challenge to show how the runtime derives environment details from your seed. It serves as a template for other challenges.</p>
         </div>
@@ -231,2298 +231,757 @@
     setupHintListeners(elements.challengeSurface);
   }
 
-  function renderHiddenInPlainSightChallenge(ctx) {
-    // Beginner-friendly “view source / inspect element” style challenge.
-    // Dynamic flag: user finds a per-team proof code, then claims from backend.
-    let proof = null;
+  // ==========================================================================
+  // SDG 3 — GOOD HEALTH AND WELLBEING CHALLENGES
+  // ==========================================================================
 
+  // ── Easy 1: Patient Portal Leak ──────────────────────────────────────────
+  function renderPatientPortalLeakChallenge(ctx) {
     const hints = [
-      "The proof is hidden in the HTML source code.",
-      "Right-click and select 'Inspect' or 'View Page Source'.",
-      "Look for hidden elements or comments in the DOM.",
-      "The proof is a 32-character hex string."
+      'The portal returns active patients by default — but the API may support additional query parameters.',
+      'REST APIs often accept boolean flags like include_deleted, show_all, or include_archived.',
+      'Some APIs require special HTTP request headers to enable preview or beta features.',
+      'Try X-Feature-Preview: enabled alongside the query parameter.',
+      'Look carefully at the archived records — one contains a sensitive token.',
     ];
 
     setChallengeSurface(`
       <div class="challenge-section">
-        ${renderChallengeHeader(
-      ctx.runtimeSlug,
-      'Hidden in Plain Sight',
-      'A static SDG 15 page. Find the hidden proof code, then claim the flag.'
-    )}
-
+        ${renderChallengeHeader(ctx.runtimeSlug, 'Patient Portal Leak', 'SDG 3 — A hospital patient portal with hidden data exposure.')}
         <div class="challenge-panel">
           <div class="text-lg font-bold">Objective</div>
-          <p class="text-base text-secondary mb-4">Find the hidden proof code on this page.</p>
-          
+          <p class="text-base text-secondary mb-4">Find the hidden audit token in the patient portal API.</p>
           <div class="text-lg font-bold">Description</div>
-          <p class="text-base text-secondary">A static page with a hidden secret. You need to inspect the page source or DOM to find the proof code, then submit it to claim the flag.</p>
+          <p class="text-base text-secondary">The MediConnect Patient Portal API filters records by default. Active patients are shown, but the API may expose more data than intended through undocumented query parameters. Find the hidden record and retrieve the audit token.</p>
         </div>
-
-        <div class="challenge-panel" role="region" aria-label="SDG 15 poster">
-          <div class="pill sdg-tag">SDG 15 • Life on Land</div>
-          <div class="sdg-poster">
-            <div class="sdg-poster-row">
-                <h4 class="sdg-poster-title">Protect forests, protect life.</h4>
-                <p class="sdg-poster-text">
-                  Wildlife conservation is often discussed as a distant or optional concern, but in reality it is a fundamental issue tied to the health of the planet and the future of humanity. Across the world, ecosystems are under increasing pressure, and the survival of countless species now depends on deliberate human action.<br><br>
-                  Wildlife is not separate from human life. Every ecosystem functions as a connected system, where plants, animals, and natural processes rely on one another to remain stable. Forests help regulate climate and air quality. Wetlands filter water and reduce flooding. Pollinators such as bees and butterflies make food production possible. When wildlife populations decline, these systems weaken, and the consequences extend far beyond the loss of individual species.<br><br>
-                  Over the past century, human activity has altered the natural world at an unprecedented pace. Expanding cities, industrial agriculture, deforestation, pollution, and climate change have destroyed or fragmented habitats across the globe. Many species are unable to adapt quickly enough to these changes. As a result, scientists warn that the planet is currently experiencing a mass extinction event, driven largely by human behavior rather than natural causes.<br><br>
-                  The loss of wildlife is not limited to rare or visually striking animals. Each species plays a role in maintaining ecological balance. When one species disappears, it can trigger a chain reaction throughout an ecosystem. Predators may lose prey, vegetation may become overgrazed, and soil and water systems may degrade. A well documented example is the removal of top predators from certain environments, which has led to overpopulation of herbivores, destruction of plant life, and long term damage to entire landscapes.<br><br>
-                  Despite this, wildlife conservation is sometimes framed as a barrier to economic development. This perspective assumes a tradeoff between environmental protection and human progress. In reality, the two are closely connected. Healthy ecosystems support industries such as agriculture, fishing, tourism, and forestry. Conservation efforts often reduce long term costs by preventing soil erosion, water contamination, and natural disasters. Protecting nature is not an obstacle to progress but a foundation for sustainable growth.<br><br>
-                  Wildlife conservation also carries ethical significance. Humans have become the dominant force shaping the planet, giving them a unique responsibility. Many species face extinction not because of natural competition, but because of habitat destruction, illegal hunting, and environmental pollution. Conservation recognizes that other forms of life have intrinsic value and that future generations deserve a world rich in biodiversity rather than one defined by loss.<br><br>
-                  Efforts to protect wildlife take many forms. Governments establish protected areas such as national parks and wildlife reserves. Scientists conduct research to understand population trends and ecosystem health. Conservation organizations work with local communities to promote sustainable land use. International agreements aim to limit poaching and illegal wildlife trade. While these efforts are not perfect, they demonstrate that meaningful action is possible.<br><br>
-                  Individual choices also play a role. Reducing waste, supporting sustainable products, conserving energy, and learning about environmental issues all contribute to broader conservation goals. When individuals and communities act with awareness, their combined impact can influence industries and policies.<br><br>
-                  Wildlife conservation is ultimately about preserving balance. It is about recognizing that the well being of humans is inseparable from the well being of the natural world. Protecting wildlife is not simply an act of preservation, but an investment in a stable, resilient future for the planet and all who depend on it.<br><br>
-                  By choosing conservation, humanity chooses responsibility, foresight, and respect for life beyond itself.
-                </p>
-              </div>
-            </div>
-            <div class="divider sdg-poster-divider"></div>
-            <p class="sdg-poster-note">
-              Challenge: find the hidden proof code on this page.
-            </p>
-          </div>
-        </div>
-
-        <div class="divider"></div>
-
-        <div class="challenge-grid">
-          <div class="challenge-panel">
-            <div class="field">
-              <label class="label" for="hips-proof">Proof code</label>
-              <input class="input" id="hips-proof" name="proof" placeholder="32 hex characters" autocomplete="off" />
-            </div>
-            <div class="actions">
-              <button class="button" id="hips-claim" type="button">Claim flag</button>
-              <button class="button secondary" id="hips-reset" type="button">Reset</button>
-            </div>
-          </div>
-          <div class="challenge-panel">
-            <div class="output" id="hips-output" role="status" aria-live="polite">Waiting for proof…</div>
-            <div class="flag hidden" id="hips-flag" aria-label="Claimed flag"></div>
-            <p class="surface-note">The real flag is returned by the backend after proof validation.</p>
-          </div>
-        </div>
-
-        <div class="hidden-proof" id="hips-hidden" aria-hidden="true">PROOF: (loading)</div>
-        
-        ${renderHints(hints)}
-      </div>
-    `);
-
-    setupHintListeners(elements.challengeSurface);
-
-    const input = document.getElementById('hips-proof');
-    const claimBtn = document.getElementById('hips-claim');
-    const resetBtn = document.getElementById('hips-reset');
-    const out = document.getElementById('hips-output');
-    const flagEl = document.getElementById('hips-flag');
-
-    function write(message, kind) {
-      out.classList.remove('ok', 'bad');
-      if (kind) out.classList.add(kind);
-      out.textContent = message;
-    }
-
-    function showFlag(flag) {
-      flagEl.textContent = flag;
-      flagEl.classList.remove('hidden');
-    }
-
-    function hideFlag() {
-      flagEl.textContent = '';
-      flagEl.classList.add('hidden');
-    }
-
-    claimBtn.addEventListener('click', () => {
-      const value = (input.value || '').trim();
-      if (!value) {
-        write('Paste the proof code first.', 'bad');
-        return;
-      }
-
-      hideFlag();
-
-      (async () => {
-        if (!ctx.launchToken) {
-          write('Missing launch token; cannot claim flag.', 'bad');
-          return;
-        }
-
-        write('Claiming flag…', 'ok');
-        try {
-          const flag = await claimFlag(ctx.launchToken, value, ctx.runtimeSlug);
-          write('Flag claimed. Copy and submit it on the main platform.', 'ok');
-          showFlag(flag);
-        } catch (e) {
-          const msg = (e && e.message) ? e.message : 'Unknown error';
-          write(`Claim failed: ${msg}`, 'bad');
-        }
-      })();
-    });
-
-    resetBtn.addEventListener('click', () => {
-      input.value = '';
-      write('Waiting for proof…');
-      hideFlag();
-      input.focus();
-    });
-
-    (async () => {
-      if (!ctx.launchToken) return;
-      try {
-        const qs = new URLSearchParams({ seed: ctx.runtimeState.artifact_seed });
-        const resp = await fetch(`/api/hidden-in-plain-sight?${qs.toString()}`, {
-          method: 'GET',
-          credentials: 'omit',
-          cache: 'no-store',
-        });
-        const data = await resp.json().catch(() => null);
-        if (!resp.ok) {
-          const hidden = document.getElementById('hips-hidden');
-          const raw = data && (data.error ?? data.message);
-          const msg =
-            typeof raw === 'string'
-              ? raw
-              : raw
-                ? JSON.stringify(raw)
-                : `HTTP ${resp.status}`;
-          if (hidden) hidden.textContent = `PROOF: (error: ${msg})`;
-          return;
-        }
-        if (data && typeof data.proof === 'string') {
-          proof = data.proof.trim();
-          const hidden = document.getElementById('hips-hidden');
-          if (hidden) hidden.textContent = `PROOF: ${proof}`;
-        }
-      } catch {
-        const hidden = document.getElementById('hips-hidden');
-        if (hidden) hidden.textContent = 'PROOF: (error loading proof)';
-      }
-    })();
-  }
-
-  function renderSaveTheSpeciesChallenge(ctx) {
-    // Easy challenge: user triggers a report download and finds the proof in
-    // request/response metadata (not rendered in the DOM).
-    // The real flag is claimed dynamically from the backend.
-
-    const hints = [
-      "The proof is not on the page itself.",
-      "Trigger the report download and watch the network traffic.",
-      "Open Developer Tools > Network tab before clicking download.",
-      "Look for custom headers (like X-Archive-Tag) in the response headers."
-    ];
-
-    setChallengeSurface(`
-      <div class="challenge-section">
-        ${renderChallengeHeader(
-      ctx.runtimeSlug,
-      'Save the Species',
-      'A conservation status table with a report export. Find the archive tag used for the export, then claim the flag.'
-    )}
-
         <div class="challenge-panel">
-          <div class="text-lg font-bold">Objective</div>
-          <p class="text-base text-secondary mb-4">Find the archive tag used for the export.</p>
-          
-          <div class="text-lg font-bold">Description</div>
-          <p class="text-base text-secondary">A conservation status table with a report export functionality. Download the report and find the hidden proof in the network exchange.</p>
-        </div>
-
-        <table class="surface-table" aria-label="Animals and conservation statuses">
-          <thead>
-            <tr>
-              <th>Animal</th>
-              <th>Status</th>
-              <th>Notes</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Amur leopard</td>
-              <td>Critically Endangered</td>
-              <td>Habitat fragmentation and poaching pressure.</td>
-            </tr>
-            <tr>
-              <td>Sea otter</td>
-              <td>Endangered</td>
-              <td>Keystone species; sensitive to oil pollution.</td>
-            </tr>
-            <tr>
-              <td>Sumatran orangutan</td>
-              <td>Critically Endangered</td>
-              <td>Deforestation for agriculture reduces habitat.</td>
-            </tr>
-            <tr>
-              <td>Hawksbill turtle</td>
-              <td>Critically Endangered</td>
-              <td>Illegal trade; nesting sites under threat.</td>
-            </tr>
-            <tr>
-              <td>Axolotl</td>
-              <td>Critically Endangered</td>
-              <td>Archived monitoring report available (export required).</td>
-            </tr>
-            <tr>
-              <td>Snow leopard</td>
-              <td>Vulnerable</td>
-              <td>Human-wildlife conflict; shrinking range.</td>
-            </tr>
-          </tbody>
-        </table>
-
-        <div class="divider"></div>
-
-        <div class="challenge-panel">
-          <p class="surface-note">Field report export</p>
+          <p class="surface-note">MediConnect Patient Portal v2.3</p>
           <div class="actions">
-            <button class="button secondary" id="sts-download" type="button">Download report</button>
+            <button class="button secondary" id="ppl-fetch" type="button">Fetch Patients</button>
           </div>
-          <pre class="code-block" id="sts-raw" style="white-space: pre-wrap; overflow-wrap: anywhere;">(no report yet)</pre>
+          <div class="divider"></div>
+          <p class="surface-note">API Response</p>
+          <pre class="code-block" id="ppl-raw" style="min-height:80px;">(no data yet)</pre>
         </div>
-
-        <div class="divider"></div>
-
         <div class="challenge-grid">
           <div class="challenge-panel">
             <div class="field">
-              <label class="label" for="sts-proof">Proof code</label>
-              <input class="input" id="sts-proof" name="proof" placeholder="32 hex characters" autocomplete="off" />
-              <p class="help">Paste the archive tag you found from the export request/response.</p>
+              <label class="label" for="ppl-proof">Proof code</label>
+              <input class="input" id="ppl-proof" name="proof" placeholder="32 hex characters" autocomplete="off" />
             </div>
             <div class="actions">
-              <button class="button" id="sts-claim" type="button">Claim flag</button>
-              <button class="button secondary" id="sts-reset" type="button">Reset</button>
+              <button class="button" id="ppl-claim" type="button">Claim flag</button>
             </div>
           </div>
           <div class="challenge-panel">
-            <div class="output" id="sts-output" role="status" aria-live="polite">Waiting for proof…</div>
-            <div class="flag hidden" id="sts-flag" aria-label="Claimed flag"></div>
-            <p class="surface-note">The real flag is returned by the backend after proof validation.</p>
+            <div class="output" id="ppl-output" role="status" aria-live="polite">Waiting for proof...</div>
+            <div class="flag hidden" id="ppl-flag" aria-label="Claimed flag"></div>
           </div>
         </div>
-
         ${renderHints(hints)}
       </div>
     `);
 
     setupHintListeners(elements.challengeSurface);
 
-    const input = document.getElementById('sts-proof');
-    const claimBtn = document.getElementById('sts-claim');
-    const resetBtn = document.getElementById('sts-reset');
-    const downloadBtn = document.getElementById('sts-download');
-    const out = document.getElementById('sts-output');
-    const flagEl = document.getElementById('sts-flag');
-    const rawEl = document.getElementById('sts-raw');
+    const raw = document.getElementById('ppl-raw');
+    const out = document.getElementById('ppl-output');
+    const flagEl = document.getElementById('ppl-flag');
+    const proofEl = document.getElementById('ppl-proof');
+    const fetchBtn = document.getElementById('ppl-fetch');
+    const claimBtn = document.getElementById('ppl-claim');
 
-    function write(message, kind) {
-      out.classList.remove('ok', 'bad');
-      if (kind) out.classList.add(kind);
-      out.textContent = message;
-    }
+    function write(m, k) { out.classList.remove('ok', 'bad'); if (k) out.classList.add(k); out.textContent = m; }
+    function showFlag(f) { flagEl.textContent = f; flagEl.classList.remove('hidden'); }
+    function hideFlag() { flagEl.textContent = ''; flagEl.classList.add('hidden'); }
 
-    function showFlag(flag) {
-      flagEl.textContent = flag;
-      flagEl.classList.remove('hidden');
-    }
-
-    function hideFlag() {
-      flagEl.textContent = '';
-      flagEl.classList.add('hidden');
-    }
-
-    claimBtn.addEventListener('click', () => {
-      const value = (input.value || '').trim();
-      if (!value) {
-        write('Paste the proof code first.', 'bad');
-        return;
-      }
-
-      hideFlag();
-
-      (async () => {
-        if (!ctx.launchToken) {
-          write('Missing launch token; cannot claim flag.', 'bad');
-          return;
-        }
-
-        write('Claiming flag…', 'ok');
-        try {
-          const flag = await claimFlag(ctx.launchToken, value, ctx.runtimeSlug);
-          write('Flag claimed. Copy and submit it on the main platform.', 'ok');
-          showFlag(flag);
-        } catch (e) {
-          const msg = (e && e.message) ? e.message : 'Unknown error';
-          write(`Claim failed: ${msg}`, 'bad');
-        }
-      })();
-    });
-
-    resetBtn.addEventListener('click', () => {
-      input.value = '';
-      write('Waiting for proof…');
-      hideFlag();
-      input.focus();
-    });
-
-    async function downloadReport() {
-      if (!ctx.launchToken) {
-        write('Missing launch token; cannot download report.', 'bad');
-        return;
-      }
-
-      write('Downloading report…', 'ok');
+    fetchBtn?.addEventListener('click', async () => {
+      const qs = new URLSearchParams({ seed: ctx.runtimeState.artifact_seed });
       try {
-        const qs = new URLSearchParams({ seed: ctx.runtimeState.artifact_seed });
-        const resp = await fetch(`/api/save-the-species?${qs.toString()}`, {
-          method: 'GET',
-          credentials: 'omit',
-          cache: 'no-store',
-        });
-
-        // Intentionally do NOT read or display any proof-like metadata here.
-        const text = await resp.text();
-        if (rawEl) {
-          try {
-            const parsed = JSON.parse(text);
-            rawEl.textContent = JSON.stringify(parsed, null, 2);
-          } catch {
-            rawEl.textContent = text;
-          }
-        }
-
-        if (!resp.ok) {
-          let msg = `HTTP ${resp.status}`;
-          try {
-            const parsed = JSON.parse(text);
-            msg = parsed?.error || parsed?.message || msg;
-          } catch {
-            // ignore
-          }
-          write(`Report download failed: ${msg}`, 'bad');
-          return;
-        }
-
-        write('Report downloaded. Check Network → response headers for the archive tag.', 'ok');
-      } catch (e) {
-        const msg = (e && e.message) ? e.message : 'Unknown error';
-        write(`Report download failed: ${msg}`, 'bad');
-      }
-    }
-
-    downloadBtn?.addEventListener('click', downloadReport);
-  }
-
-  function renderEndangeredAccessChallenge(ctx) {
-    let proof = null;
-    const params = new URLSearchParams(window.location.search);
-    const hasBypassParam = params.get('access') === 'letmein';
-
-    const hints = [
-      "The restriction is enforced entirely in the browser (client-side).",
-      "Inspect the JavaScript code to find the `gateIsOpen` function.",
-      "You can manually set `window.overrideAccess = true` in the DevTools Console.",
-      "Alternatively, add `?access=letmein` to the URL query string."
-    ];
-
-    setChallengeSurface(`
-      <div class="challenge-section">
-        ${renderChallengeHeader(
-      ctx.runtimeSlug,
-      'Endangered Access',
-      'Public conservation page with a fake client-side restriction gate.'
-    )}
-
-        <div class="challenge-panel">
-          <div class="text-lg font-bold">Objective</div>
-          <p class="text-base text-secondary mb-4">Bypass the client-side restriction to access telemetry.</p>
-          
-          <div class="text-lg font-bold">Description</div>
-          <p class="text-base text-secondary">The restricted area is protected by a client-side check. Bypassing it to reveal the telemetry proof code.</p>
-        </div>
-
-        <div class="challenge-panel">
-          <p class="help">Public brief:</p>
-          <p class="sdg-poster-text">We monitor key habitats, track illegal logging signals, and publish open data.</p>
-          <p class="sdg-poster-text">Certain telemetry is <strong>restricted</strong>, but this gate is only enforced client-side.</p>
-        </div>
-
-        <div class="challenge-panel" id="ea-guard">
-          <div id="ea-locked" class="${hasBypassParam ? 'hidden' : ''}">
-            <p class="surface-note">Restricted telemetry requires reviewer approval.</p>
-            <div class="actions">
-              <button class="button secondary" id="ea-try">Run client check</button>
-            </div>
-          </div>
-          <div id="ea-unlocked" class="${hasBypassParam ? '' : 'hidden'}">
-            <p class="surface-note">Restricted telemetry (client-side only gate):</p>
-            <p class="sdg-poster-text">Site hash: <strong id="ea-sitehash">(fetch telemetry)</strong></p>
-            <div class="actions">
-              <button class="button secondary" id="ea-telemetry">Fetch telemetry</button>
-              <button class="button" id="ea-claim">Claim flag</button>
-            </div>
-            <div class="output" id="ea-output" role="status" aria-live="polite">Ready to claim…</div>
-            <div class="flag hidden" id="ea-flag" aria-label="Claimed flag"></div>
-          </div>
-        </div>
-
-        ${renderHints(hints)}
-      </div>
-    `);
-
-    setupHintListeners(elements.challengeSurface);
-
-    const locked = document.getElementById('ea-locked');
-    const unlocked = document.getElementById('ea-unlocked');
-    const tryBtn = document.getElementById('ea-try');
-    const telemetryBtn = document.getElementById('ea-telemetry');
-    const claimBtn = document.getElementById('ea-claim');
-    const out = document.getElementById('ea-output');
-    const flagEl = document.getElementById('ea-flag');
-    const siteHashEl = document.getElementById('ea-sitehash');
-
-    function gateIsOpen() {
-      return hasBypassParam || window.overrideAccess === true;
-    }
-
-    function openGate() {
-      locked.classList.add('hidden');
-      unlocked.classList.remove('hidden');
-    }
-
-    function write(message, kind) {
-      out.classList.remove('ok', 'bad');
-      if (kind) out.classList.add(kind);
-      out.textContent = message;
-    }
-
-    function showFlag(flag) {
-      flagEl.textContent = flag;
-      flagEl.classList.remove('hidden');
-    }
-
-    async function fetchTelemetry() {
-      if (!ctx.launchToken) {
-        write('Missing launch token; cannot fetch telemetry.', 'bad');
-        return;
-      }
-
-      write('Fetching telemetry…', 'ok');
-      try {
-        const qs = new URLSearchParams({ seed: ctx.runtimeState.artifact_seed, slug: ctx.runtimeSlug });
-        const resp = await fetch(`/api/endangered-access?${qs.toString()}`, {
-          method: 'GET',
-          credentials: 'omit',
-          cache: 'no-store',
-        });
+        const resp = await fetch('/api/patient-portal-leak?' + qs, { credentials: 'omit', cache: 'no-store' });
         const data = await resp.json().catch(() => null);
-        if (!resp.ok) {
-          const msg = data?.error || data?.message || `HTTP ${resp.status}`;
-          write(`Telemetry error: ${msg}`, 'bad');
-          return;
-        }
-
-        const siteHash = data?.telemetry?.site_hash;
-        if (typeof siteHash === 'string' && siteHash.trim()) {
-          proof = siteHash.trim();
-          if (siteHashEl) siteHashEl.textContent = proof;
-          write('Telemetry loaded. You can now claim the flag.', 'ok');
-        } else {
-          write('Telemetry loaded, but no proof found.', 'bad');
-        }
-      } catch (e) {
-        const msg = (e && e.message) ? e.message : 'Unknown error';
-        write(`Telemetry error: ${msg}`, 'bad');
-      }
-    }
-
-    if (gateIsOpen()) openGate();
-
-    tryBtn?.addEventListener('click', () => {
-      if (gateIsOpen()) {
-        openGate();
-      } else {
-        write('Client-side gate still locked. Try console overrides or URL param.', 'bad');
-      }
-    });
-
-    telemetryBtn?.addEventListener('click', () => {
-      if (!gateIsOpen()) {
-        write('Gate not bypassed.', 'bad');
-        return;
-      }
-      fetchTelemetry();
+        raw.textContent = JSON.stringify(data, null, 2);
+        const auditToken = data?.patients?.find(p => p.audit_token)?.audit_token;
+        if (auditToken) { proofEl.value = auditToken; write('Audit token found!', 'ok'); }
+        else { write(resp.ok ? 'Data loaded. Look for hidden parameters.' : 'Error: ' + (data?.error || resp.status), resp.ok ? 'ok' : 'bad'); }
+      } catch (e) { write('Error: ' + e.message, 'bad'); }
     });
 
     claimBtn?.addEventListener('click', () => {
-      if (!gateIsOpen()) {
-        write('Gate not bypassed.', 'bad');
-        return;
-      }
-      if (!proof) {
-        write('Fetch telemetry first to obtain the proof.', 'bad');
-        return;
-      }
-      if (!ctx.launchToken) {
-        write('Missing launch token; cannot claim flag.', 'bad');
-        return;
-      }
-      write('Claiming flag…', 'ok');
-      (async () => {
-        try {
-          const flag = await claimFlag(ctx.launchToken, proof, ctx.runtimeSlug);
-          write('Flag claimed. Copy and submit it on the main platform.', 'ok');
-          showFlag(flag);
-        } catch (e) {
-          const msg = (e && e.message) ? e.message : 'Unknown error';
-          write(`Claim failed: ${msg}`, 'bad');
-        }
-      })();
+      const v = (proofEl.value || '').trim(); if (!v) { write('Paste proof first.', 'bad'); return; } hideFlag();
+      (async () => { try { const flag = await claimFlag(ctx.launchToken, v, ctx.runtimeSlug); write('Flag claimed.', 'ok'); showFlag(flag); } catch (e) { write('Claim failed: ' + e.message, 'bad'); } })();
     });
   }
 
-  function renderIllegalLoggingNetworkChallenge(ctx) {
-    // Cryptography/Validation flaw challenge.
-    // The client-side verification logic is flawed (e.g. checks only first few chars of hash).
-    // Users must forget a signature to bypass the check.
-
+  // ── Easy 2: Vaccine Cold Chain ───────────────────────────────────────────
+  function renderVaccineColdChainChallenge(ctx) {
     const hints = [
-      "The token format is `VER-<permitId>-<signature>`.",
-      "Inspect the `verifyBtn` click handler in the source code.",
-      "The signature validation logic is flawed; it doesn't check the entire string.",
-      "You only need to match the first 2 characters of the expected signature."
+      'The monitoring system requires authentication before generating compliance reports.',
+      'Call GET ?action=status first — it returns live sensor data and a session_token.',
+      'Once you have the session_token, include it in a POST request body to generate the report.',
+      'POST ?action=generate_report with {"session_token":"<token>"} in the JSON body.',
+      'The calibration report contains the token required for regulatory submission.',
     ];
 
     setChallengeSurface(`
       <div class="challenge-section">
-        ${renderChallengeHeader(
-      ctx.runtimeSlug,
-      'Illegal Logging Network',
-      'Compliance dashboard with flawed verification. Forge a valid verification token.'
-    )}
-
+        ${renderChallengeHeader(ctx.runtimeSlug, 'Vaccine Cold Chain', 'SDG 3 — Two-step authenticated vaccine compliance report API.')}
         <div class="challenge-panel">
           <div class="text-lg font-bold">Objective</div>
-          <p class="text-base text-secondary mb-4">Forge a valid verification token.</p>
-          
+          <p class="text-base text-secondary mb-4">Retrieve the calibration token from the cold chain compliance report.</p>
           <div class="text-lg font-bold">Description</div>
-          <p class="text-base text-secondary">The system checks tokens starting with <code>VER-</code>. The verification logic is valid, but the implementation has a critical flaw.</p>
+          <p class="text-base text-secondary">VaxTrack monitors vaccine cold chains for the WHO immunization network. Generating a compliance report is session-gated: you must first fetch a session token from the status endpoint, then present that token in a POST request to the report endpoint. Follow the two-step flow.</p>
         </div>
-
+        <div class="challenge-panel">
+          <p class="surface-note">Step 1 — Authenticate: GET ?action=status</p>
+          <div class="actions">
+            <button class="button secondary" id="vcc-status" type="button">GET: Fetch Status &amp; Session Token</button>
+          </div>
+          <div class="field" style="margin-top:8px;">
+            <label class="label" for="vcc-token">Session token (auto-populated from status response)</label>
+            <input class="input" id="vcc-token" placeholder="Fetch status to get session_token..." autocomplete="off" />
+          </div>
+          <div class="divider"></div>
+          <p class="surface-note">Step 1 Response</p>
+          <pre class="code-block" id="vcc-raw1" style="min-height:80px;">(no data yet)</pre>
+        </div>
+        <div class="challenge-panel">
+          <p class="surface-note">Step 2 — Generate Report: POST ?action=generate_report</p>
+          <div class="actions">
+            <button class="button secondary" id="vcc-report" type="button">POST: Generate Calibration Report</button>
+          </div>
+          <div class="divider"></div>
+          <p class="surface-note">Step 2 Response</p>
+          <pre class="code-block" id="vcc-raw2" style="min-height:80px;">(no data yet)</pre>
+        </div>
         <div class="challenge-grid">
           <div class="challenge-panel">
             <div class="field">
-              <label class="label" for="iln-token">Compliance Token</label>
-              <input class="input" id="iln-token" placeholder="VER-XXXX-..." autocomplete="off" />
-              <p class="help">Format: VER-[PermitID]-[Signature]</p>
+              <label class="label" for="vcc-proof">Proof code</label>
+              <input class="input" id="vcc-proof" name="proof" placeholder="32 hex characters" autocomplete="off" />
             </div>
             <div class="actions">
-              <button class="button" id="iln-verify">Verify Token</button>
+              <button class="button" id="vcc-claim" type="button">Claim flag</button>
             </div>
           </div>
           <div class="challenge-panel">
-             <div class="output" id="iln-output" role="status" aria-live="polite">System Ready. Enter token to verify.</div>
-             <div class="flag hidden" id="iln-flag" aria-label="Claimed flag"></div>
+            <div class="output" id="vcc-output" role="status" aria-live="polite">Waiting for proof...</div>
+            <div class="flag hidden" id="vcc-flag" aria-label="Claimed flag"></div>
           </div>
         </div>
-
         ${renderHints(hints)}
       </div>
     `);
 
     setupHintListeners(elements.challengeSurface);
 
-    const input = document.getElementById('iln-token');
-    const verifyBtn = document.getElementById('iln-verify');
-    const resetBtn = document.getElementById('iln-reset');
-    const out = document.getElementById('iln-output');
-    const flagEl = document.getElementById('iln-flag');
+    const raw1 = document.getElementById('vcc-raw1');
+    const raw2 = document.getElementById('vcc-raw2');
+    const out = document.getElementById('vcc-output');
+    const flagEl = document.getElementById('vcc-flag');
+    const proofEl = document.getElementById('vcc-proof');
+    const tokenEl = document.getElementById('vcc-token');
+    const statusBtn = document.getElementById('vcc-status');
+    const reportBtn = document.getElementById('vcc-report');
+    const claimBtn = document.getElementById('vcc-claim');
 
-    function write(message, kind) {
-      out.classList.remove('ok', 'bad');
-      if (kind) out.classList.add(kind);
-      out.textContent = message;
-    }
+    function write(m, k) { out.classList.remove('ok', 'bad'); if (k) out.classList.add(k); out.textContent = m; }
+    function showFlag(f) { flagEl.textContent = f; flagEl.classList.remove('hidden'); }
+    function hideFlag() { flagEl.textContent = ''; flagEl.classList.add('hidden'); }
 
-    function showFlag(flag) {
-      flagEl.textContent = flag;
-      flagEl.classList.remove('hidden');
-    }
+    const seed = ctx.runtimeState.artifact_seed;
 
-    function hideFlag() {
-      flagEl.textContent = '';
-      flagEl.classList.add('hidden');
-    }
-
-    async function sha256Hex(text) {
-      const enc = new TextEncoder();
-      const bytes = enc.encode(String(text));
-      const digest = await crypto.subtle.digest('SHA-256', bytes);
-      return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, '0')).join('');
-    }
-
-    verifyBtn?.addEventListener('click', () => {
-      const token = (input.value || '').trim();
-      hideFlag();
-
-      if (!token.startsWith('VER-')) {
-        write('Token must start with VER-', 'bad');
-        return;
-      }
-
-      (async () => {
-        // Token format: VER-<permitId>-<sig>
-        // Intended: sig == sha256(permitId).slice(0, 8)
-        // Bug: only checks the first 2 hex chars.
-        const parts = token.split('-');
-        if (parts.length < 3) {
-          write('Malformed token. Expected VER-<permitId>-<sig>', 'bad');
-          return;
-        }
-        const permitId = parts.slice(1, -1).join('-');
-        const sig = parts[parts.length - 1] || '';
-        if (!permitId) {
-          write('Malformed token: missing permitId.', 'bad');
-          return;
-        }
-
-        try {
-          const expected = (await sha256Hex(permitId)).slice(0, 8);
-          const ok = sig.toLowerCase().startsWith(expected.slice(0, 2));
-          if (!ok) {
-            write('Verification failed.', 'bad');
-            return;
-          }
-        } catch (e) {
-          const msg = (e && e.message) ? e.message : 'Unknown error';
-          write(`Local verifier error: ${msg}`, 'bad');
-          return;
-        }
-
-        const seed = ctx?.runtimeState?.artifact_seed;
-        if (!seed || !/^[0-9a-f]{64}$/i.test(String(seed))) {
-          write('Missing or invalid runtime seed; cannot request proof.', 'bad');
-          return;
-        }
-
-        write('Verification passed. Requesting proof…', 'ok');
-
-        try {
-          // IMPORTANT: use `seed` here instead of `token`.
-          // The launch token is one-time and is already redeemed during runtime init.
-          const qs = new URLSearchParams({
-            seed,
-            slug: ctx.runtimeSlug,
-            verificationToken: token,
-          });
-          const resp = await fetch(`/api/illegal-logging-network?${qs.toString()}`, {
-            method: 'GET',
-            credentials: 'omit',
-            cache: 'no-store',
-          });
-          const data = await resp.json().catch(() => null);
-          if (!resp.ok) {
-            const msg = data?.error || data?.message || `HTTP ${resp.status}`;
-            write(`Verification service denied: ${msg}`, 'bad');
-            return;
-          }
-
-          const p = data && typeof data.proof === 'string' ? data.proof.trim() : '';
-          if (!p) {
-            write('Verification passed, but no proof returned.', 'bad');
-            return;
-          }
-          proof = p;
-
-          if (!ctx.launchToken) {
-            write('Proof issued, but missing launch token; cannot claim flag.', 'bad');
-            return;
-          }
-
-          write('Proof issued. Claiming flag…', 'ok');
-          const flag = await claimFlag(ctx.launchToken, proof, ctx.runtimeSlug);
-          write('Flag claimed. Copy and submit it on the main platform.', 'ok');
-          showFlag(flag);
-        } catch (e) {
-          const msg = (e && e.message) ? e.message : 'Unknown error';
-          write(`Claim failed: ${msg}`, 'bad');
-        }
-      })();
+    statusBtn?.addEventListener('click', async () => {
+      try {
+        const resp = await fetch('/api/vaccine-cold-chain?seed=' + seed + '&action=status', { credentials: 'omit', cache: 'no-store' });
+        const data = await resp.json().catch(() => null);
+        raw1.textContent = JSON.stringify(data, null, 2);
+        if (data?.session_token) { tokenEl.value = data.session_token; write('Session token received. Proceed to Step 2.', 'ok'); }
+        else { write(resp.ok ? 'Response received.' : 'Error: ' + (data?.error || resp.status), resp.ok ? 'ok' : 'bad'); }
+      } catch (e) { write('Error: ' + e.message, 'bad'); }
     });
 
-    resetBtn?.addEventListener('click', () => {
-      input.value = '';
-      hideFlag();
-      write('Waiting for token…');
+    reportBtn?.addEventListener('click', async () => {
+      const token = (tokenEl.value || '').trim();
+      if (!token) { write('Fetch status first to get a session token.', 'bad'); return; }
+      try {
+        const resp = await fetch('/api/vaccine-cold-chain?seed=' + seed + '&action=generate_report', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ session_token: token }),
+          credentials: 'omit', cache: 'no-store',
+        });
+        const data = await resp.json().catch(() => null);
+        raw2.textContent = JSON.stringify(data, null, 2);
+        if (data?.calibration_token) { proofEl.value = data.calibration_token; write('Calibration token obtained!', 'ok'); }
+        else { write(resp.ok ? 'Response received.' : 'Error: ' + (data?.error || resp.status), resp.ok ? 'ok' : 'bad'); }
+      } catch (e) { write('Error: ' + e.message, 'bad'); }
+    });
+
+    claimBtn?.addEventListener('click', () => {
+      const v = (proofEl.value || '').trim(); if (!v) { write('Paste proof first.', 'bad'); return; } hideFlag();
+      (async () => { try { const flag = await claimFlag(ctx.launchToken, v, ctx.runtimeSlug); write('Flag claimed.', 'ok'); showFlag(flag); } catch (e) { write('Claim failed: ' + e.message, 'bad'); } })();
     });
   }
 
-  function renderPoacherSupplyChainChallenge(ctx) {
-    // API inspection challenge.
-    // The UI shows some data, but the API returns more (hidden fields or different structure).
-    // User must inspect network response to find the flag/proof.
-
+  // ── Easy 3: Wellness Bot Injection ───────────────────────────────────────
+  function renderWellnessBotInjectionChallenge(ctx) {
     const hints = [
-      "The dashboard loads case data from an API endpoint.",
-      "The UI doesn't display everything returned by the server.",
-      "Check the Network tab and inspect the JSON response for `featured_case`.",
-      "Look for hidden fields like `internal_proof` or `case_code`."
+      'ARIA is a wellness AI with a system prompt it refuses to reveal.',
+      'AI developers sometimes leave developer backdoors in production systems.',
+      'Look for a way to enable a debug or developer mode.',
+      'Developer overrides often use a specific keyword format with a separator between key and value.',
+      'The activation command uses a double-character separator, not the standard colon-space pattern.',
     ];
 
     setChallengeSurface(`
       <div class="challenge-section">
-        ${renderChallengeHeader(
-      ctx.runtimeSlug,
-      'Wildlife Protection Logistics',
-      'Public SDG 15 dashboard. Find the internal case proof code.'
-    )}
-
+        ${renderChallengeHeader(ctx.runtimeSlug, 'Wellness Bot Injection', 'SDG 3 — Prompt-inject a health AI to leak its system configuration.')}
         <div class="challenge-panel">
           <div class="text-lg font-bold">Objective</div>
-          <p class="text-base text-secondary mb-4">Find the internal case proof code.</p>
-          
+          <p class="text-base text-secondary mb-4">Extract the activation code from ARIA's system prompt.</p>
           <div class="text-lg font-bold">Description</div>
-          <p class="text-base text-secondary">The dashboard shows aggregated data on wildlife crime cases. The API might verify more details than what is displayed on the UI.</p>
+          <p class="text-base text-secondary">ARIA is an AI wellness assistant deployed across SDG 3 health facilities. It has been instructed never to reveal its configuration. Security researchers suspect a developer left a test override in the production build. Find the override and extract the activation code from ARIA's system prompt.</p>
         </div>
-
         <div class="challenge-panel">
-          <h4 class="text-lg font-bold text-accent">Recent Cases</h4>
+          <p class="surface-note">ARIA Wellness AI v3.1</p>
+          <div class="field">
+            <label class="label" for="wbi-msg">Your message</label>
+            <input class="input" id="wbi-msg" placeholder="Type a message to ARIA..." autocomplete="off" />
+          </div>
+          <div class="actions">
+            <button class="button secondary" id="wbi-send" type="button">Send</button>
+          </div>
+          <div class="divider"></div>
+          <p class="surface-note">ARIA Response</p>
+          <pre class="code-block" id="wbi-raw" style="min-height:80px;">(no response yet)</pre>
+        </div>
+        <div class="challenge-grid">
+          <div class="challenge-panel">
+            <div class="field">
+              <label class="label" for="wbi-proof">Proof code</label>
+              <input class="input" id="wbi-proof" name="proof" placeholder="32 hex characters" autocomplete="off" />
+            </div>
+            <div class="actions">
+              <button class="button" id="wbi-claim" type="button">Claim flag</button>
+            </div>
+          </div>
+          <div class="challenge-panel">
+            <div class="output" id="wbi-output" role="status" aria-live="polite">Waiting for proof...</div>
+            <div class="flag hidden" id="wbi-flag" aria-label="Claimed flag"></div>
+          </div>
+        </div>
+        ${renderHints(hints)}
+      </div>
+    `);
+
+    setupHintListeners(elements.challengeSurface);
+
+    const raw = document.getElementById('wbi-raw');
+    const out = document.getElementById('wbi-output');
+    const flagEl = document.getElementById('wbi-flag');
+    const proofEl = document.getElementById('wbi-proof');
+    const msgEl = document.getElementById('wbi-msg');
+    const sendBtn = document.getElementById('wbi-send');
+    const claimBtn = document.getElementById('wbi-claim');
+
+    function write(m, k) { out.classList.remove('ok', 'bad'); if (k) out.classList.add(k); out.textContent = m; }
+    function showFlag(f) { flagEl.textContent = f; flagEl.classList.remove('hidden'); }
+    function hideFlag() { flagEl.textContent = ''; flagEl.classList.add('hidden'); }
+
+    function extractProofFromText(text) {
+      const match = text && text.match(/activation code is:\s*([0-9a-f]{32})/i);
+      return match ? match[1] : null;
+    }
+
+    sendBtn?.addEventListener('click', async () => {
+      const msg = (msgEl.value || '').trim();
+      if (!msg) { write('Enter a message.', 'bad'); return; }
+      try {
+        const resp = await fetch('/api/wellness-bot-injection?seed=' + ctx.runtimeState.artifact_seed, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: msg }),
+          credentials: 'omit', cache: 'no-store',
+        });
+        const data = await resp.json().catch(() => null);
+        raw.textContent = JSON.stringify(data, null, 2);
+        const proof = data?.debug?.system_prompt && extractProofFromText(data.debug.system_prompt);
+        if (proof) { proofEl.value = proof; write('Activation code extracted from system prompt!', 'ok'); }
+        else { write(resp.ok ? 'Response received.' : 'Error: ' + (data?.error || resp.status), resp.ok ? 'ok' : 'bad'); }
+      } catch (e) { write('Error: ' + e.message, 'bad'); }
+    });
+
+    msgEl?.addEventListener('keydown', (e) => { if (e.key === 'Enter') sendBtn?.click(); });
+
+    claimBtn?.addEventListener('click', () => {
+      const v = (proofEl.value || '').trim(); if (!v) { write('Paste proof first.', 'bad'); return; } hideFlag();
+      (async () => { try { const flag = await claimFlag(ctx.launchToken, v, ctx.runtimeSlug); write('Flag claimed.', 'ok'); showFlag(flag); } catch (e) { write('Claim failed: ' + e.message, 'bad'); } })();
+    });
+  }
+
+  // ── Easy 4: Dosage Calculator Overflow ───────────────────────────────────
+  function renderDosageCalculatorOverflowChallenge(ctx) {
+    const hints = [
+      'The PharmaSafe calculator uses a legacy 16-bit accumulator for the daily dose.',
+      'A 16-bit unsigned integer can hold a maximum value of 65535.',
+      'What happens when dose_mg × frequency_per_day exceeds 65535?',
+      'Try large values: dose_mg=1000, frequency_per_day=100 gives 100,000 which overflows.',
+      'The overflow handler returns a safety override token for regulatory audit.',
+    ];
+
+    setChallengeSurface(`
+      <div class="challenge-section">
+        ${renderChallengeHeader(ctx.runtimeSlug, 'Dosage Calculator Overflow', 'SDG 3 — Trigger a 16-bit overflow in a clinical dosage calculator.')}
+        <div class="challenge-panel">
+          <div class="text-lg font-bold">Objective</div>
+          <p class="text-base text-secondary mb-4">Trigger the safety override and retrieve the override token.</p>
+          <div class="text-lg font-bold">Description</div>
+          <p class="text-base text-secondary">PharmaSafe is a dosage calculator used in WHO Essential Medicines programs. It was ported from an old PDA and uses a 16-bit integer accumulator for daily dose calculations. When the accumulated value overflows, a safety override is triggered. Exploit this to retrieve the override token.</p>
+        </div>
+        <div class="challenge-panel">
+          <p class="surface-note">PharmaSafe Dosage Calculator v4.0</p>
           <div class="challenge-grid">
-             <div class="field">
-               <label class="label" for="psc-region">Region</label>
-               <select class="input" id="psc-region">
-                 <option value="">All regions</option>
-                 <option>Amazon Basin</option>
-                 <option>Congo Basin</option>
-                 <option>Southeast Asia</option>
-                 <option>Himalayas</option>
-                 <option>East Africa</option>
-                 <option>Madagascar</option>
-               </select>
-             </div>
-             
-             <div class="field">
-               <label class="label" for="psc-species">Species</label>
-               <select class="input" id="psc-species">
-                 <option value="">All species</option>
-                 <option>Pangolin</option>
-                 <option>Elephant</option>
-                 <option>Tiger</option>
-                 <option>Rhino</option>
-                 <option>Parrot</option>
-                 <option>Orchid</option>
-               </select>
-             </div>
-
-             <div class="actions">
-               <button class="button" id="psc-refresh" type="button">Refresh dashboard</button>
-               <button class="button secondary" id="psc-clear" type="button">Clear Filters</button>
-             </div>
+            <div class="field">
+              <label class="label" for="dco-med">Medication</label>
+              <select class="input" id="dco-med">
+                <option value="amoxicillin">Amoxicillin</option>
+                <option value="ibuprofen">Ibuprofen</option>
+                <option value="paracetamol">Paracetamol</option>
+                <option value="metformin">Metformin</option>
+              </select>
+            </div>
+            <div class="field">
+              <label class="label" for="dco-dose">Dose (mg)</label>
+              <input class="input" id="dco-dose" type="number" value="500" />
+            </div>
+            <div class="field">
+              <label class="label" for="dco-freq">Frequency (per day)</label>
+              <input class="input" id="dco-freq" type="number" value="3" />
+            </div>
           </div>
-          
+          <div class="actions">
+            <button class="button secondary" id="dco-calc" type="button">Calculate Dose</button>
+          </div>
           <div class="divider"></div>
-          
-          <p class="surface-note">Dashboard Output</p>
-          <pre class="code-block" id="psc-raw" style="min-height: 100px;">(no data yet)</pre>
+          <p class="surface-note">API Response</p>
+          <pre class="code-block" id="dco-raw" style="min-height:80px;">(no data yet)</pre>
         </div>
-
-        <div class="divider"></div>
-
         <div class="challenge-grid">
           <div class="challenge-panel">
             <div class="field">
-              <label class="label" for="psc-proof">Case Proof Code</label>
-              <input class="input" id="psc-proof" placeholder="Code from API..." autocomplete="off" />
+              <label class="label" for="dco-proof">Proof code</label>
+              <input class="input" id="dco-proof" name="proof" placeholder="32 hex characters" autocomplete="off" />
             </div>
             <div class="actions">
-              <button class="button" id="psc-claim">Claim flag</button>
+              <button class="button" id="dco-claim" type="button">Claim flag</button>
             </div>
           </div>
           <div class="challenge-panel">
-            <div class="output" id="psc-output" role="status" aria-live="polite">Waiting for proof...</div>
-            <div class="flag hidden" id="psc-flag" aria-label="Claimed flag"></div>
+            <div class="output" id="dco-output" role="status" aria-live="polite">Waiting for proof...</div>
+            <div class="flag hidden" id="dco-flag" aria-label="Claimed flag"></div>
           </div>
         </div>
-
         ${renderHints(hints)}
       </div>
     `);
 
     setupHintListeners(elements.challengeSurface);
 
-    const regionEl = document.getElementById('psc-region');
-    const speciesEl = document.getElementById('psc-species');
-    const refreshBtn = document.getElementById('psc-refresh');
-    const clearBtn = document.getElementById('psc-clear');
-    const input = document.getElementById('psc-proof');
-    const claimBtn = document.getElementById('psc-claim');
-    const out = document.getElementById('psc-output');
-    const raw = document.getElementById('psc-raw');
-    const flagEl = document.getElementById('psc-flag');
+    const raw = document.getElementById('dco-raw');
+    const out = document.getElementById('dco-output');
+    const flagEl = document.getElementById('dco-flag');
+    const proofEl = document.getElementById('dco-proof');
+    const medEl = document.getElementById('dco-med');
+    const doseEl = document.getElementById('dco-dose');
+    const freqEl = document.getElementById('dco-freq');
+    const calcBtn = document.getElementById('dco-calc');
+    const claimBtn = document.getElementById('dco-claim');
 
-    function write(message, kind) {
-      out.classList.remove('ok', 'bad');
-      if (kind) out.classList.add(kind);
-      out.textContent = message;
+    function write(m, k) { out.classList.remove('ok', 'bad'); if (k) out.classList.add(k); out.textContent = m; }
+    function showFlag(f) { flagEl.textContent = f; flagEl.classList.remove('hidden'); }
+    function hideFlag() { flagEl.textContent = ''; flagEl.classList.add('hidden'); }
+
+    calcBtn?.addEventListener('click', async () => {
+      const medication = medEl.value;
+      const dose_mg = parseFloat(doseEl.value);
+      const frequency_per_day = parseFloat(freqEl.value);
+      if (isNaN(dose_mg) || isNaN(frequency_per_day)) { write('Enter valid numbers.', 'bad'); return; }
+      try {
+        const resp = await fetch('/api/dosage-calculator-overflow?seed=' + ctx.runtimeState.artifact_seed, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ medication, dose_mg, frequency_per_day }),
+          credentials: 'omit', cache: 'no-store',
+        });
+        const data = await resp.json().catch(() => null);
+        raw.textContent = JSON.stringify(data, null, 2);
+        if (data?.override_token) { proofEl.value = data.override_token; write('Safety override triggered! Token retrieved.', 'ok'); }
+        else { write(resp.ok ? 'Calculated. Try triggering an overflow.' : 'Error: ' + (data?.error || resp.status), resp.ok ? 'ok' : 'bad'); }
+      } catch (e) { write('Error: ' + e.message, 'bad'); }
+    });
+
+    claimBtn?.addEventListener('click', () => {
+      const v = (proofEl.value || '').trim(); if (!v) { write('Paste proof first.', 'bad'); return; } hideFlag();
+      (async () => { try { const flag = await claimFlag(ctx.launchToken, v, ctx.runtimeSlug); write('Flag claimed.', 'ok'); showFlag(flag); } catch (e) { write('Claim failed: ' + e.message, 'bad'); } })();
+    });
+  }
+
+  // ── Medium 1: EHR Parameter Pollution ───────────────────────────────────
+  function renderEhrParamPollutionChallenge(ctx) {
+    const hints = [
+      'The EHR API authenticates requests by checking the patient_id parameter.',
+      'HTTP parameter pollution occurs when the same parameter appears multiple times in a URL.',
+      'Some frameworks use the first value for auth checks but the last value for data lookups.',
+      'Try appending &patient_id=SYS-ADMIN to a valid request URL to access the SYS-ADMIN record.',
+      'The SYS-ADMIN record contains an admin_access_code — POST it to ?action=verify to get the proof.',
+    ];
+
+    setChallengeSurface(`
+      <div class="challenge-section">
+        ${renderChallengeHeader(ctx.runtimeSlug, 'EHR Parameter Pollution', 'SDG 3 — Bypass EHR authorization with HTTP parameter pollution.')}
+        <div class="challenge-panel">
+          <div class="text-lg font-bold">Objective</div>
+          <p class="text-base text-secondary mb-4">Access the SYS-ADMIN record by bypassing the patient_id authorization check.</p>
+          <div class="text-lg font-bold">Description</div>
+          <p class="text-base text-secondary">HealthBridge EHR restricts access to an authorized patient ID whitelist. However, the authorization check and the data lookup use different methods to read the patient_id parameter from the URL. This inconsistency allows HTTP Parameter Pollution to bypass the access control.</p>
+        </div>
+        <div class="challenge-panel">
+          <p class="surface-note">HealthBridge EHR System v5.2</p>
+          <div class="field">
+            <label class="label" for="epp-pid">Patient ID</label>
+            <select class="input" id="epp-pid">
+              <option value="PT-1001">PT-1001 (Jamie Torres)</option>
+              <option value="PT-1002">PT-1002 (Riley Kim)</option>
+              <option value="PT-1003">PT-1003 (Casey Park)</option>
+              <option value="PT-1004">PT-1004 (Drew Morgan)</option>
+              <option value="PT-1005">PT-1005 (Avery Quinn)</option>
+            </select>
+          </div>
+          <div class="actions">
+            <button class="button secondary" id="epp-fetch" type="button">Fetch Record</button>
+          </div>
+          <div class="divider"></div>
+          <p class="surface-note">API Response</p>
+          <pre class="code-block" id="epp-raw" style="min-height:80px;">(no data yet)</pre>
+        </div>
+        <div class="challenge-panel">
+          <p class="surface-note">Manual URL Override (for advanced exploitation)</p>
+          <div class="field">
+            <label class="label" for="epp-custom">Custom query string suffix</label>
+            <input class="input" id="epp-custom" placeholder="e.g. &patient_id=SYS-ADMIN" autocomplete="off" />
+            <p class="help">Appended to the base request URL after seed and the first patient_id.</p>
+          </div>
+          <div class="actions">
+            <button class="button secondary" id="epp-custom-fetch" type="button">Fetch with Custom Params</button>
+          </div>
+        </div>
+        <div class="challenge-panel">
+          <p class="surface-note">Step 2 — Verify Admin Access Code</p>
+          <p class="text-base text-secondary" style="margin-bottom:8px;">Once you have the <code>admin_access_code</code> from the SYS-ADMIN record, POST it here to obtain the authorization token.</p>
+          <div class="field">
+            <label class="label" for="epp-code">admin_access_code (auto-populated on success)</label>
+            <input class="input" id="epp-code" placeholder="Paste admin_access_code here..." autocomplete="off" />
+          </div>
+          <div class="actions">
+            <button class="button secondary" id="epp-verify" type="button">POST ?action=verify</button>
+          </div>
+          <div class="divider"></div>
+          <p class="surface-note">Verify Response</p>
+          <pre class="code-block" id="epp-verify-raw" style="min-height:60px;">(no data yet)</pre>
+        </div>
+        <div class="challenge-grid">
+          <div class="challenge-panel">
+            <div class="field">
+              <label class="label" for="epp-proof">Proof code</label>
+              <input class="input" id="epp-proof" name="proof" placeholder="32 hex characters" autocomplete="off" />
+            </div>
+            <div class="actions">
+              <button class="button" id="epp-claim" type="button">Claim flag</button>
+            </div>
+          </div>
+          <div class="challenge-panel">
+            <div class="output" id="epp-output" role="status" aria-live="polite">Waiting for proof...</div>
+            <div class="flag hidden" id="epp-flag" aria-label="Claimed flag"></div>
+          </div>
+        </div>
+        ${renderHints(hints)}
+      </div>
+    `);
+
+    setupHintListeners(elements.challengeSurface);
+
+    const raw = document.getElementById('epp-raw');
+    const out = document.getElementById('epp-output');
+    const flagEl = document.getElementById('epp-flag');
+    const proofEl = document.getElementById('epp-proof');
+    const pidEl = document.getElementById('epp-pid');
+    const customEl = document.getElementById('epp-custom');
+    const codeEl = document.getElementById('epp-code');
+    const verifyRaw = document.getElementById('epp-verify-raw');
+    const fetchBtn = document.getElementById('epp-fetch');
+    const customFetchBtn = document.getElementById('epp-custom-fetch');
+    const verifyBtn = document.getElementById('epp-verify');
+    const claimBtn = document.getElementById('epp-claim');
+    const seed = ctx.runtimeState.artifact_seed;
+
+    function write(m, k) { out.classList.remove('ok', 'bad'); if (k) out.classList.add(k); out.textContent = m; }
+    function showFlag(f) { flagEl.textContent = f; flagEl.classList.remove('hidden'); }
+    function hideFlag() { flagEl.textContent = ''; flagEl.classList.add('hidden'); }
+
+    async function doFetch(url) {
+      try {
+        const resp = await fetch(url, { credentials: 'omit', cache: 'no-store' });
+        const data = await resp.json().catch(() => null);
+        raw.textContent = JSON.stringify(data, null, 2);
+        if (data?.record?.admin_access_code) {
+          if (codeEl) codeEl.value = data.record.admin_access_code;
+          write('SYS-ADMIN record accessed! admin_access_code captured. Proceed to Step 2.', 'ok');
+        } else { write(resp.ok ? 'Record loaded.' : 'Error: ' + (data?.error || resp.status), resp.ok ? 'ok' : 'bad'); }
+      } catch (e) { write('Error: ' + e.message, 'bad'); }
     }
 
-    function showFlag(flag) {
-      flagEl.textContent = flag;
-      flagEl.classList.remove('hidden');
+    fetchBtn?.addEventListener('click', () => doFetch('/api/ehr-param-pollution?seed=' + seed + '&patient_id=' + pidEl.value));
+    customFetchBtn?.addEventListener('click', () => {
+      const suffix = (customEl.value || '').trim();
+      doFetch('/api/ehr-param-pollution?seed=' + seed + '&patient_id=' + pidEl.value + suffix);
+    });
+
+    verifyBtn?.addEventListener('click', async () => {
+      const code = (codeEl?.value || '').trim();
+      if (!code) { write('Get the SYS-ADMIN record first to obtain the admin_access_code.', 'bad'); return; }
+      try {
+        const resp = await fetch('/api/ehr-param-pollution?seed=' + seed + '&action=verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ admin_access_code: code }),
+          credentials: 'omit', cache: 'no-store',
+        });
+        const data = await resp.json().catch(() => null);
+        if (verifyRaw) verifyRaw.textContent = JSON.stringify(data, null, 2);
+        if (data?.admin_token) { proofEl.value = data.admin_token; write('Admin access verified! Proof retrieved.', 'ok'); }
+        else { write(resp.ok ? 'Response received.' : 'Error: ' + (data?.error || resp.status), resp.ok ? 'ok' : 'bad'); }
+      } catch (e) { write('Error: ' + e.message, 'bad'); }
+    });
+
+    claimBtn?.addEventListener('click', () => {
+      const v = (proofEl.value || '').trim(); if (!v) { write('Paste proof first.', 'bad'); return; } hideFlag();
+      (async () => { try { const flag = await claimFlag(ctx.launchToken, v, ctx.runtimeSlug); write('Flag claimed.', 'ok'); showFlag(flag); } catch (e) { write('Claim failed: ' + e.message, 'bad'); } })();
+    });
+  }
+
+  // ── Medium 2: Pharmacy XOR Oracle ────────────────────────────────────────
+  function renderPharmacyXorOracleChallenge(ctx) {
+    const hints = [
+      'The pharmacy system uses a repeating XOR key to encrypt authorization codes.',
+      'An encryption oracle is available — you can encrypt any hex-encoded bytes.',
+      'If encrypt(P) = P XOR key, then encrypt(known_P) XOR known_P = key.',
+      'Encrypt a string of known bytes (e.g., 32 zero bytes: "00" * 32) to recover the key.',
+      'Once you have the key: proof = ciphertext XOR key (applied in repeating 16-byte blocks).',
+    ];
+
+    setChallengeSurface(`
+      <div class="challenge-section">
+        ${renderChallengeHeader(ctx.runtimeSlug, 'Pharmacy XOR Oracle', 'SDG 3 — Break a repeating-key XOR cipher to decrypt a prescription code.')}
+        <div class="challenge-panel">
+          <div class="text-lg font-bold">Objective</div>
+          <p class="text-base text-secondary mb-4">Decrypt the encrypted prescription authorization code.</p>
+          <div class="text-lg font-bold">Description</div>
+          <p class="text-base text-secondary">RxSecure encrypts controlled-substance authorization codes with a proprietary repeating-key XOR cipher. The system provides an encryption oracle for "authorized testing." Use the oracle to recover the XOR key and decrypt the prescription code.</p>
+        </div>
+        <div class="challenge-panel">
+          <p class="surface-note">RxSecure Pharmacy Authorization System v2.0</p>
+          <div class="actions">
+            <button class="button secondary" id="pxo-info" type="button">Get Encrypted Code</button>
+          </div>
+          <div class="field" style="margin-top:12px;">
+            <label class="label" for="pxo-pt">Plaintext to encrypt (hex)</label>
+            <input class="input" id="pxo-pt" placeholder="e.g. 4141414141414141... (hex bytes)" autocomplete="off" />
+          </div>
+          <div class="actions">
+            <button class="button secondary" id="pxo-enc" type="button">Encrypt Plaintext</button>
+          </div>
+          <div class="divider"></div>
+          <p class="surface-note">API Response</p>
+          <pre class="code-block" id="pxo-raw" style="min-height:80px;">(no data yet)</pre>
+        </div>
+        <div class="challenge-grid">
+          <div class="challenge-panel">
+            <div class="field">
+              <label class="label" for="pxo-proof">Proof code</label>
+              <input class="input" id="pxo-proof" name="proof" placeholder="32 hex characters" autocomplete="off" />
+            </div>
+            <div class="actions">
+              <button class="button" id="pxo-claim" type="button">Claim flag</button>
+            </div>
+          </div>
+          <div class="challenge-panel">
+            <div class="output" id="pxo-output" role="status" aria-live="polite">Waiting for proof...</div>
+            <div class="flag hidden" id="pxo-flag" aria-label="Claimed flag"></div>
+          </div>
+        </div>
+        ${renderHints(hints)}
+      </div>
+    `);
+
+    setupHintListeners(elements.challengeSurface);
+
+    const raw = document.getElementById('pxo-raw');
+    const out = document.getElementById('pxo-output');
+    const flagEl = document.getElementById('pxo-flag');
+    const proofEl = document.getElementById('pxo-proof');
+    const ptEl = document.getElementById('pxo-pt');
+    const infoBtn = document.getElementById('pxo-info');
+    const encBtn = document.getElementById('pxo-enc');
+    const claimBtn = document.getElementById('pxo-claim');
+    const seed = ctx.runtimeState.artifact_seed;
+
+    function write(m, k) { out.classList.remove('ok', 'bad'); if (k) out.classList.add(k); out.textContent = m; }
+    function showFlag(f) { flagEl.textContent = f; flagEl.classList.remove('hidden'); }
+    function hideFlag() { flagEl.textContent = ''; flagEl.classList.add('hidden'); }
+
+    infoBtn?.addEventListener('click', async () => {
+      try {
+        const resp = await fetch('/api/pharmacy-xor-oracle?seed=' + seed + '&action=info', { credentials: 'omit', cache: 'no-store' });
+        const data = await resp.json().catch(() => null);
+        raw.textContent = JSON.stringify(data, null, 2);
+        write(resp.ok ? 'Encrypted code loaded. Use the oracle to recover the key.' : 'Error: ' + (data?.error || resp.status), resp.ok ? 'ok' : 'bad');
+      } catch (e) { write('Error: ' + e.message, 'bad'); }
+    });
+
+    encBtn?.addEventListener('click', async () => {
+      const pt = (ptEl.value || '').trim().toLowerCase();
+      if (!pt) { write('Enter hex bytes to encrypt.', 'bad'); return; }
+      try {
+        const resp = await fetch('/api/pharmacy-xor-oracle?seed=' + seed + '&action=encrypt&plaintext=' + encodeURIComponent(pt), { credentials: 'omit', cache: 'no-store' });
+        const data = await resp.json().catch(() => null);
+        raw.textContent = JSON.stringify(data, null, 2);
+        write(resp.ok ? 'Encrypted. Now XOR ciphertext with plaintext to recover key.' : 'Error: ' + (data?.error || resp.status), resp.ok ? 'ok' : 'bad');
+      } catch (e) { write('Error: ' + e.message, 'bad'); }
+    });
+
+    claimBtn?.addEventListener('click', () => {
+      const v = (proofEl.value || '').trim(); if (!v) { write('Paste proof first.', 'bad'); return; } hideFlag();
+      (async () => { try { const flag = await claimFlag(ctx.launchToken, v, ctx.runtimeSlug); write('Flag claimed.', 'ok'); showFlag(flag); } catch (e) { write('Claim failed: ' + e.message, 'bad'); } })();
+    });
+  }
+
+  // ── Medium 3: Health Data NoSQL Injection ────────────────────────────────
+  function renderHealthDataNosqlChallenge(ctx) {
+    const hints = [
+      'The ClinicalDB API accepts JSON filter objects with MongoDB-style operators.',
+      'Use ?action=fields to enumerate all field names across all records.',
+      'Classified records have a hidden field not listed in the documented schema.',
+      'Use {"filter":{"<hidden_field>":{"$exists":true}}} to find the record with the hidden field.',
+      'Use the extract action with $regex to blind-extract the hidden field value character by character.',
+    ];
+
+    setChallengeSurface(`
+      <div class="challenge-section">
+        ${renderChallengeHeader(ctx.runtimeSlug, 'Health Data NoSQL Injection', 'SDG 3 — Blind-extract a classified trial code from a clinical database.')}
+        <div class="challenge-panel">
+          <div class="text-lg font-bold">Objective</div>
+          <p class="text-base text-secondary mb-4">Extract the classified trial code from the TRL-CLASSIFIED record.</p>
+          <div class="text-lg font-bold">Description</div>
+          <p class="text-base text-secondary">ClinicalDB stores SDG 3 clinical trial data. One classified record contains a hidden field with a sensitive trial code. The query API supports MongoDB-style operators ($exists, $regex, $eq, etc.) but redacts the hidden field value. Use blind extraction via $regex to recover it character by character.</p>
+        </div>
+        <div class="challenge-panel">
+          <p class="surface-note">ClinicalDB Trial Data API v3.0</p>
+          <div class="actions">
+            <button class="button secondary" id="hdn-schema" type="button">Get Schema</button>
+            <button class="button secondary" id="hdn-fields" type="button">List All Fields</button>
+          </div>
+          <div class="field" style="margin-top:12px;">
+            <label class="label" for="hdn-filter">Query filter (JSON)</label>
+            <input class="input" id="hdn-filter" placeholder='{"status":"classified"}' autocomplete="off" />
+          </div>
+          <div class="actions">
+            <button class="button secondary" id="hdn-query" type="button">POST Query</button>
+          </div>
+          <div class="field" style="margin-top:12px;">
+            <label class="label" for="hdn-regex">Blind extract regex (for TRL-CLASSIFIED)</label>
+            <input class="input" id="hdn-regex" placeholder="^a.*" autocomplete="off" />
+          </div>
+          <div class="actions">
+            <button class="button secondary" id="hdn-extract" type="button">POST Extract</button>
+          </div>
+          <div class="divider"></div>
+          <p class="surface-note">API Response</p>
+          <pre class="code-block" id="hdn-raw" style="min-height:80px;">(no data yet)</pre>
+        </div>
+        <div class="challenge-grid">
+          <div class="challenge-panel">
+            <div class="field">
+              <label class="label" for="hdn-proof">Proof code</label>
+              <input class="input" id="hdn-proof" name="proof" placeholder="32 hex characters" autocomplete="off" />
+            </div>
+            <div class="actions">
+              <button class="button" id="hdn-claim" type="button">Claim flag</button>
+            </div>
+          </div>
+          <div class="challenge-panel">
+            <div class="output" id="hdn-output" role="status" aria-live="polite">Waiting for proof...</div>
+            <div class="flag hidden" id="hdn-flag" aria-label="Claimed flag"></div>
+          </div>
+        </div>
+        ${renderHints(hints)}
+      </div>
+    `);
+
+    setupHintListeners(elements.challengeSurface);
+
+    const raw = document.getElementById('hdn-raw');
+    const out = document.getElementById('hdn-output');
+    const flagEl = document.getElementById('hdn-flag');
+    const proofEl = document.getElementById('hdn-proof');
+    const filterEl = document.getElementById('hdn-filter');
+    const regexEl = document.getElementById('hdn-regex');
+    const schemaBtn = document.getElementById('hdn-schema');
+    const fieldsBtn = document.getElementById('hdn-fields');
+    const queryBtn = document.getElementById('hdn-query');
+    const extractBtn = document.getElementById('hdn-extract');
+    const claimBtn = document.getElementById('hdn-claim');
+    const seed = ctx.runtimeState.artifact_seed;
+
+    function write(m, k) { out.classList.remove('ok', 'bad'); if (k) out.classList.add(k); out.textContent = m; }
+    function showFlag(f) { flagEl.textContent = f; flagEl.classList.remove('hidden'); }
+    function hideFlag() { flagEl.textContent = ''; flagEl.classList.add('hidden'); }
+
+    async function getAction(action) {
+      const resp = await fetch('/api/health-data-nosql?seed=' + seed + '&action=' + action, { credentials: 'omit', cache: 'no-store' });
+      const data = await resp.json().catch(() => null);
+      raw.textContent = JSON.stringify(data, null, 2);
+      write(resp.ok ? 'Response received.' : 'Error: ' + (data?.error || resp.status), resp.ok ? 'ok' : 'bad');
     }
 
-    function hideFlag() {
-      flagEl.textContent = '';
-      flagEl.classList.add('hidden');
-    }
-
-    async function fetchAggregated() {
-      if (!ctx.launchToken) {
-        write('Missing launch token; cannot load dashboard.', 'bad');
-        return;
-      }
-
-      const filter = {
-        region: (regionEl.value || '').trim() || null,
-        species: (speciesEl.value || '').trim() || null,
-      };
-
-      const qs = new URLSearchParams({
-        seed: ctx.runtimeState.artifact_seed,
-        slug: ctx.runtimeSlug,
-        filter: JSON.stringify(filter),
+    async function postAction(action, body) {
+      const resp = await fetch('/api/health-data-nosql?seed=' + seed + '&action=' + action, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body), credentials: 'omit', cache: 'no-store',
       });
-
-      write('Fetching aggregated statistics…', 'ok');
-      hideFlag();
-      try {
-        const resp = await fetch(`/api/poacher-supply-chain?${qs.toString()}`, {
-          method: 'GET',
-          credentials: 'omit',
-          cache: 'no-store',
-        });
-        const data = await resp.json().catch(() => null);
-
-        raw.textContent = JSON.stringify(data, null, 2);
-
-        if (!resp.ok) {
-          const msg = data?.error || data?.message || `HTTP ${resp.status}`;
-          write(`Dashboard error: ${msg}`, 'bad');
-          return;
-        }
-
-        const totals = data && data.totals ? data.totals : null;
-        const featured = data && data.featured_case ? data.featured_case : null;
-
-        const lines = [];
-        if (totals) {
-          lines.push(`Total seizures: ${totals.totalSeizures}`);
-          lines.push(`Regions affected: ${totals.regionsAffected}`);
-          lines.push(`Species protected: ${totals.speciesProtected}`);
-        }
-        if (featured && featured.caseId) {
-          lines.push('---');
-          lines.push(`Featured case: ${featured.caseId}`);
-          lines.push(`${featured.region} • ${featured.species}`);
-        }
-        if (data && data.case_detail) {
-          lines.push('---');
-          lines.push('Case detail returned by API. Review raw response.');
-        }
-
-        write(lines.length ? lines.join('\\n') : 'No data returned.', 'ok');
-
-      } catch (e) {
-        const msg = (e && e.message) ? e.message : 'Unknown error';
-        write(`Dashboard error: ${msg}`, 'bad');
-      }
+      return resp.json().catch(() => null);
     }
 
-    refreshBtn?.addEventListener('click', fetchAggregated);
-    clearBtn?.addEventListener('click', () => {
-      regionEl.value = '';
-      speciesEl.value = '';
-      input.value = '';
-      raw.textContent = '(no data yet)';
-      hideFlag();
-      write('Cleared. Refresh dashboard to fetch again.');
-    });
-
-    claimBtn.addEventListener('click', () => {
-      const val = (input.value || '').trim();
-      if (!val) { write('Enter proof code first.', 'bad'); return; }
-
-      write('Claiming...', 'ok');
-      hideFlag();
-
-      if (!ctx.launchToken) {
-        write('Missing launch token.', 'bad');
-        return;
-      }
-
-      claimBtn.disabled = true;
-      claimFlag(ctx.launchToken, val, ctx.runtimeSlug)
-        .then(flag => {
-          write('Flag claimed!', 'ok');
-          showFlag(flag);
-          claimBtn.disabled = false;
-        })
-        .catch(e => {
-          const msg = (e && e.message) ? e.message : 'Unknown error';
-          write(`Claim failed: ${msg}`, 'bad');
-          claimBtn.disabled = false;
-        });
-    });
-
-    fetchAggregated();
-  }
-
-  function renderRangerRiskEngineChallenge(ctx) {
-    // Sandbox escape / Eval challenge.
-    // Users provide a JS formula. The backend "sandboxes" it (poorly).
-    // Goal: break out and read the flag/env or return a specific proof string.
-
-    const hints = [
-      "The formula is evaluated using a method like `eval` or `new Function`.",
-      "The system claims to be sandboxed, but can you access objects outside the `row` scope?",
-      "Try accessing `this`, `global`, or `process` (if Node.js) or `window` (if browser-like, though this is server-side).",
-      "Actually, the proof is likely in the environment variables or a global constant.",
-      "Try to return `process.env` or inspect the global scope."
-    ];
-
-    setChallengeSurface(`
-      <div class="challenge-section">
-        ${renderChallengeHeader(
-      ctx.runtimeSlug,
-      'Ranger Risk Engine',
-      'A “sandboxed” risk-score formula service. Obtain the proof code by manipulating the formula.'
-    )}
-
-        <div class="challenge-panel">
-          <div class="text-lg font-bold">Objective</div>
-          <p class="text-base text-secondary mb-4">Obtain the proof code by manipulating the formula.</p>
-          
-          <div class="text-lg font-bold">Description</div>
-          <p class="text-base text-secondary">The service evaluates custom formulas. It claims to be sandboxed. Your goal is to obtain the proof code.</p>
-        </div>
-
-        <div class="challenge-panel">
-          <label class="label" for="rre-expr">Risk Formula</label>
-          <p class="help">Available variables: <code>row.seizures</code>, <code>row.paperwork</code>, <code>row.anomaly</code></p>
-          <textarea class="input" id="rre-expr" rows="3" spellcheck="false"></textarea>
-          
-          <div class="actions" style="margin-top: 12px;">
-            <button class="button secondary" id="rre-run" type="button">Run formula</button>
-            <button class="button secondary" id="rre-reset" type="button">Reset</button>
-          </div>
-        </div>
-
-        <div class="challenge-grid">
-           <div class="challenge-panel">
-             <div class="output" id="rre-output" role="status" aria-live="polite">Ready…</div>
-             <p class="surface-note">Raw API response</p>
-             <pre class="code-block" id="rre-raw">(no data yet)</pre>
-           </div>
-           
-           <div class="challenge-panel">
-             <div class="field">
-               <label class="label" for="rre-proof">Proof code</label>
-               <input class="input" id="rre-proof" name="proof" placeholder="32 hex characters" autocomplete="off" />
-               <p class="help">Once you find the proof, claim the flag below.</p>
-             </div>
-             <div class="actions">
-               <button class="button" id="rre-claim" type="button">Claim flag</button>
-             </div>
-             <div class="flag hidden" id="rre-flag" aria-label="Claimed flag"></div>
-           </div>
-        </div>
-
-        ${renderHints(hints)}
-      </div>
-    `);
-
-    setupHintListeners(elements.challengeSurface);
-
-    const exprEl = document.getElementById('rre-expr');
-    const runBtn = document.getElementById('rre-run');
-    const resetBtn = document.getElementById('rre-reset');
-    const out = document.getElementById('rre-output');
-    const raw = document.getElementById('rre-raw');
-    const proofEl = document.getElementById('rre-proof');
-    const claimBtn = document.getElementById('rre-claim');
-    const flagEl = document.getElementById('rre-flag');
-
-    function write(message, kind) {
-      out.classList.remove('ok', 'bad');
-      if (kind) out.classList.add(kind);
-      out.textContent = message;
-    }
-
-    function showFlag(flag) {
-      flagEl.textContent = flag;
-      flagEl.classList.remove('hidden');
-    }
-
-    function hideFlag() {
-      flagEl.textContent = '';
-      flagEl.classList.add('hidden');
-    }
-
-    async function runFormula() {
-      const expr = (exprEl.value || '').trim();
-
-      const seed = ctx?.runtimeState?.artifact_seed;
-      if (!seed || !/^[0-9a-f]{64}$/i.test(String(seed))) {
-        write('Missing or invalid runtime seed; cannot query engine.', 'bad');
-        return;
-      }
-
-      write('Evaluating formula…', 'ok');
-      hideFlag();
-
-      try {
-        const qs = new URLSearchParams({
-          seed,
-          slug: ctx.runtimeSlug,
-          expr: expr || '',
-        });
-        const resp = await fetch(`/api/ranger-risk-engine?${qs.toString()}`, {
-          method: 'GET',
-          credentials: 'omit',
-          cache: 'no-store',
-        });
-        const data = await resp.json().catch(() => null);
-        raw.textContent = JSON.stringify(data, null, 2);
-
-        if (!resp.ok) {
-          const msg = data?.error || data?.message || `HTTP ${resp.status}`;
-          write(`Engine error: ${msg}`, 'bad');
-          return;
-        }
-
-        const count = Array.isArray(data?.entries) ? data.entries.length : 0;
-        write(`OK. Scored ${count} routes. Review raw response.`, 'ok');
-      } catch (e) {
-        const msg = (e && e.message) ? e.message : 'Unknown error';
-        write(`Engine error: ${msg}`, 'bad');
-      }
-    }
-
-    runBtn?.addEventListener('click', runFormula);
-    resetBtn?.addEventListener('click', () => {
-      exprEl.value = '(row.seizures * 12) + (100 - row.paperwork) + (row.anomaly ? 25 : 0)';
-      raw.textContent = '(no data yet)';
-      proofEl.value = '';
-      hideFlag();
-      write('Ready…');
-      exprEl.focus();
-    });
-
-    claimBtn?.addEventListener('click', () => {
-      const value = (proofEl.value || '').trim();
-      if (!value) {
-        write('Paste the proof code first.', 'bad');
-        return;
-      }
-
-      hideFlag();
-      (async () => {
-        if (!ctx.launchToken) {
-          write('Missing launch token; cannot claim flag.', 'bad');
-          return;
-        }
-
-        write('Claiming flag…', 'ok');
-        try {
-          const flag = await claimFlag(ctx.launchToken, value, ctx.runtimeSlug);
-          write('Flag claimed. Copy and submit it on the main platform.', 'ok');
-          showFlag(flag);
-        } catch (e) {
-          const msg = (e && e.message) ? e.message : 'Unknown error';
-          write(`Claim failed: ${msg}`, 'bad');
-        }
-      })();
-    });
-
-    // Initialize defaults.
-    if (!exprEl.value) {
-      exprEl.value = '(row.seizures * 12) + (100 - row.paperwork) + (row.anomaly ? 25 : 0)';
-    }
-    runFormula();
-  }
-
-  // ==========================================================================
-  // SDG 9 EASY CHALLENGES
-  // ==========================================================================
-
-  function renderFactoryMaintenanceChallenge(ctx) {
-    // Methods challenge.
-    // GET /api -> 200 OK "System online"
-    // POST /api -> 200 OK "Maintenance mode active. Token: ..."
-    // Hints: Use different HTTP methods.
-
-    const hints = [
-      "The status panel sends a GET request to the API.",
-      "REST APIs often behave differently with different HTTP methods.",
-      "Try sending a POST request to the same endpoint.",
-      "You can use the 'Submit Override' button or tools like `curl` or Postman."
-    ];
-
-    setChallengeSurface(`
-      <div class="challenge-section">
-        ${renderChallengeHeader(
-      ctx.runtimeSlug,
-      'Factory Maintenance',
-      'SDG 9 — An industrial control panel in maintenance mode. Find the diagnostic token.'
-    )}
-
-        <div class="challenge-panel">
-          <div class="text-lg font-bold">Objective</div>
-          <p class="text-base text-secondary mb-4">Find the diagnostic token.</p>
-          
-          <div class="text-lg font-bold">Description</div>
-          <p class="text-base text-secondary">This factory control panel is in scheduled maintenance mode. The system exposes a status API. Interact with it to find the maintenance token.</p>
-        </div>
-
-        <div class="challenge-panel">
-          <p class="surface-note">Maintenance Panel</p>
-          <div class="actions">
-            <button class="button secondary" id="fm-status" type="button">Check Status (GET)</button>
-            <button class="button secondary" id="fm-post" type="button">Submit Override (POST)</button>
-          </div>
-          <div class="divider"></div>
-          <p class="surface-note">API Response</p>
-          <pre class="code-block" id="fm-raw" style="min-height: 80px;">(no data yet)</pre>
-        </div>
-
-        <div class="challenge-grid">
-          <div class="challenge-panel">
-            <div class="field">
-              <label class="label" for="fm-proof">Diagnostic Token</label>
-              <input class="input" id="fm-proof" name="proof" placeholder="32 hex characters" autocomplete="off" />
-            </div>
-            <div class="actions">
-              <button class="button" id="fm-claim" type="button">Claim flag</button>
-            </div>
-          </div>
-          <div class="challenge-panel">
-            <div class="output" id="fm-output" role="status" aria-live="polite">Waiting for proof...</div>
-            <div class="flag hidden" id="fm-flag" aria-label="Claimed flag"></div>
-          </div>
-        </div>
-
-        ${renderHints(hints)}
-      </div>
-    `);
-
-    setupHintListeners(elements.challengeSurface);
-
-    const raw = document.getElementById('fm-raw');
-    const out = document.getElementById('fm-output');
-    const flagEl = document.getElementById('fm-flag');
-    const proofEl = document.getElementById('fm-proof');
-    const statusBtn = document.getElementById('fm-status');
-    const postBtn = document.getElementById('fm-post');
-    const claimBtn = document.getElementById('fm-claim');
-
-    function write(m, k) { out.classList.remove('ok', 'bad'); if (k) out.classList.add(k); out.textContent = m; }
-    function showFlag(f) { flagEl.textContent = f; flagEl.classList.remove('hidden'); }
-    function hideFlag() { flagEl.textContent = ''; flagEl.classList.add('hidden'); }
-
-    async function doFetch(method) {
-      if (!ctx.launchToken) {
-        write('Missing launch token.', 'bad');
-        return;
-      }
-
-      const qs = new URLSearchParams({ seed: ctx.runtimeState.artifact_seed, slug: ctx.runtimeSlug });
-      try {
-        const resp = await fetch('/api/factory-maintenance?' + qs.toString(), {
-          method,
-          credentials: 'omit',
-          cache: 'no-store'
-        });
-        const data = await resp.json().catch(() => null);
-        raw.textContent = JSON.stringify(data, null, 2);
-
-        if (data && data.token) {
-          proofEl.value = data.token;
-          write('Token received! Claiming...', 'ok');
-          // Auto-claim for convenience? Or let user click? 
-          // Let's let user click to follow pattern, but maybe highlight it.
-          write('Token received. Click Claim Flag.', 'ok');
-        } else {
-          write(resp.ok ? 'Response received.' : 'Error: ' + (data?.error || resp.status), resp.ok ? 'ok' : 'bad');
-        }
-      } catch (e) {
-        write('Fetch error: ' + e.message, 'bad');
-      }
-    }
-
-    statusBtn?.addEventListener('click', () => doFetch('GET'));
-    postBtn?.addEventListener('click', () => doFetch('POST'));
-
-    claimBtn?.addEventListener('click', () => {
-      const v = (proofEl.value || '').trim();
-      if (!v) { write('Paste proof first.', 'bad'); return; }
-      hideFlag();
-
-      (async () => {
-        if (!ctx.launchToken) { write('Missing launch token.', 'bad'); return; }
-        try {
-          write('Claiming...', 'ok');
-          const flag = await claimFlag(ctx.launchToken, v, ctx.runtimeSlug);
-          write('Flag claimed.', 'ok');
-          showFlag(flag);
-        } catch (e) {
-          write('Claim failed: ' + e.message, 'bad');
-        }
-      })();
-    });
-  }
-
-  function renderSupplyChainMapChallenge(ctx) {
-    // Obfuscation / Filtering challenge.
-    // UI only renders `status === 'active'`.
-    // Flag/Proof is in a route with `status === 'secret'` or similar.
-
-    const hints = [
-      "The map only renders routes with status 'active'.",
-      "Check the raw API response for other statuses or hidden fields.",
-      "You don't need to use the map visualization to find the proof.",
-      "Look for `proof` or `hidden_proof` fields in the raw data for non-active routes."
-    ];
-
-    setChallengeSurface(`
-      <div class="challenge-section">
-        ${renderChallengeHeader(
-      ctx.runtimeSlug,
-      'Supply Chain Map',
-      'SDG 9 — A global infrastructure supply chain tracker. Not all routes are shown on the map.'
-    )}
-
-        <div class="challenge-panel">
-          <div class="text-lg font-bold">Objective</div>
-          <p class="text-base text-secondary mb-4">Find the proof code hidden in the data.</p>
-          
-          <div class="text-lg font-bold">Description</div>
-          <p class="text-base text-secondary">The map tracks supply chain routes. The UI only renders "active" routes. There might be other routes hidden from the view.</p>
-        </div>
-
-        <div class="challenge-panel">
-          <p class="surface-note">Active Routes</p>
-          <div class="actions">
-            <button class="button secondary" id="scm-load" type="button">Load Routes</button>
-            <button class="button secondary" id="scm-reset" type="button">Reset</button>
-          </div>
-          <table class="surface-table" id="scm-table" aria-label="Supply chain routes">
-            <thead>
-              <tr>
-                <th>Route ID</th>
-                <th>Origin</th>
-                <th>Destination</th>
-                <th>Material</th>
-                <th>Tonnage</th>
-              </tr>
-            </thead>
-            <tbody id="scm-tbody"></tbody>
-          </table>
-        </div>
-
-        <div class="challenge-panel">
-          <p class="surface-note">Raw API response</p>
-          <pre class="code-block" id="scm-raw" style="min-height: 100px;">(no data yet)</pre>
-        </div>
-
-        <div class="challenge-grid">
-          <div class="challenge-panel">
-            <div class="field">
-              <label class="label" for="scm-proof">Proof code</label>
-              <input class="input" id="scm-proof" placeholder="32 hex characters" autocomplete="off" />
-            </div>
-            <div class="actions">
-              <button class="button" id="scm-claim" type="button">Claim flag</button>
-            </div>
-          </div>
-          <div class="challenge-panel">
-            <div class="output" id="scm-output" role="status" aria-live="polite">Waiting for proof…</div>
-            <div class="flag hidden" id="scm-flag" aria-label="Claimed flag"></div>
-          </div>
-        </div>
-
-        ${renderHints(hints)}
-      </div>
-    `);
-
-    setupHintListeners(elements.challengeSurface);
-
-    const raw = document.getElementById('scm-raw');
-    const tbody = document.getElementById('scm-tbody');
-    const out = document.getElementById('scm-output');
-    const flagEl = document.getElementById('scm-flag');
-    const proofEl = document.getElementById('scm-proof');
-    const loadBtn = document.getElementById('scm-load');
-    const resetBtn = document.getElementById('scm-reset');
-    const claimBtn = document.getElementById('scm-claim');
-
-    function write(m, k) { out.classList.remove('ok', 'bad'); if (k) out.classList.add(k); out.textContent = m; }
-    function showFlag(f) { flagEl.textContent = f; flagEl.classList.remove('hidden'); }
-    function hideFlag() { flagEl.textContent = ''; flagEl.classList.add('hidden'); }
-
-    loadBtn?.addEventListener('click', async () => {
-      if (!ctx.launchToken) { write('Missing launch token.', 'bad'); return; }
-
-      const qs = new URLSearchParams({ seed: ctx.runtimeState.artifact_seed, slug: ctx.runtimeSlug });
-      try {
-        const resp = await fetch('/api/supply-chain-map?' + qs, { credentials: 'omit', cache: 'no-store' });
-        const data = await resp.json().catch(() => null);
-        raw.textContent = JSON.stringify(data, null, 2);
-        tbody.innerHTML = '';
-
-        if (data?.routes) {
-          const activeRoutes = data.routes.filter(r => r.status === 'active');
-          activeRoutes.forEach(r => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = '<td>' + escapeText(r.route_id) + '</td><td>' + escapeText(r.origin) + '</td><td>' + escapeText(r.destination) + '</td><td>' + escapeText(r.material) + '</td><td>' + (r.tonnage || '—') + '</td>';
-            tbody.appendChild(tr);
-          });
-          write('Loaded ' + activeRoutes.length + ' active routes. Are there others?', 'ok');
-        } else {
-          write('No routes found.', 'bad');
-        }
-      } catch (e) { write('Error: ' + e.message, 'bad'); }
-    });
-
-    claimBtn?.addEventListener('click', () => {
-      const v = (proofEl.value || '').trim();
-      if (!v) { write('Paste proof first.', 'bad'); return; }
-      hideFlag();
-
-      (async () => {
-        if (!ctx.launchToken) { write('Missing launch token.', 'bad'); return; }
-        try {
-          write('Claiming...', 'ok');
-          const flag = await claimFlag(ctx.launchToken, v, ctx.runtimeSlug);
-          write('Flag claimed.', 'ok');
-          showFlag(flag);
-        } catch (e) {
-          write('Claim failed: ' + e.message, 'bad');
-        }
-      })();
-    });
-
-    resetBtn?.addEventListener('click', () => {
-      proofEl.value = '';
-      raw.textContent = '(no data yet)';
-      tbody.innerHTML = '';
-      hideFlag();
-      write('Waiting for proof…');
-    });
-  }
-
-  function renderLegacyModemChallenge(ctx) {
-    // Basic Auth challenge.
-    // Hints in comments: user/pass. Or default creds.
-
-    const hints = [
-      "The description mentions 'default credentials' and a 'manual'.",
-      "Inspect the HTML source code of the challenge panel.",
-      "Look for HTML comments that might contain credentials.",
-      "Use the credentials `admin` / `infra2030` to authenticate."
-    ];
-
-    setChallengeSurface(`
-      <div class="challenge-section">
-        ${renderChallengeHeader(
-      ctx.runtimeSlug,
-      'Legacy Modem',
-      'SDG 9 — A legacy modem admin panel. Authenticate to retrieve diagnostics.'
-    )}
-
-        <div class="challenge-panel">
-          <div class="text-lg font-bold">Objective</div>
-          <p class="text-base text-secondary mb-4">Authenticate to retrieve diagnostics.</p>
-          
-          <div class="text-lg font-bold">Description</div>
-          <p class="text-base text-secondary">This modem was deployed as part of the original SDG 9 rural connectivity project. It still uses HTTP Basic authentication. You need to find the credentials.</p>
-        </div>
-
-        <div class="challenge-panel">
-          <p class="surface-note">LegacyModem-9600 Admin Panel</p>
-          
-          <!-- DEFAULT CREDENTIALS: admin / infra2030 — TODO: remove before production -->
-          
-          <p class="help" style="font-size:11px; opacity:0.5;">Firmware: LM-9600-v1.2.3 | Default user: admin | Setup guide ref: infra2030-manual.pdf</p>
-          
-          <div class="actions">
-            <button class="button secondary" id="lm-connect" type="button">Connect (Auth Required)</button>
-          </div>
-          <pre class="code-block" id="lm-raw" style="min-height: 80px;">(no data yet)</pre>
-        </div>
-
-        <div class="challenge-grid">
-           <div class="challenge-panel">
-             <div class="field">
-               <label class="label" for="lm-proof">Proof code</label>
-               <input class="input" id="lm-proof" name="proof" placeholder="32 hex characters" autocomplete="off" />
-             </div>
-             <div class="actions">
-               <button class="button" id="lm-claim" type="button">Claim flag</button>
-             </div>
-           </div>
-           <div class="challenge-panel">
-             <div class="output" id="lm-output" role="status" aria-live="polite">Waiting for proof...</div>
-             <div class="flag hidden" id="lm-flag" aria-label="Claimed flag"></div>
-           </div>
-        </div>
-
-        ${renderHints(hints)}
-      </div>
-    `);
-
-    setupHintListeners(elements.challengeSurface);
-
-    const raw = document.getElementById('lm-raw');
-    const out = document.getElementById('lm-output');
-    const flagEl = document.getElementById('lm-flag');
-    const proofEl = document.getElementById('lm-proof');
-    const connectBtn = document.getElementById('lm-connect');
-    const claimBtn = document.getElementById('lm-claim');
-
-    function write(m, k) { out.classList.remove('ok', 'bad'); if (k) out.classList.add(k); out.textContent = m; }
-    function showFlag(f) { flagEl.textContent = f; flagEl.classList.remove('hidden'); }
-    function hideFlag() { flagEl.textContent = ''; flagEl.classList.add('hidden'); }
-
-    connectBtn?.addEventListener('click', async () => {
-      // Browsers handle basic auth dialogs if 401 is returned, 
-      // but fetch() with credentials: 'include' might just fail or show prompt depending on browser.
-      // Better to simulate "Try default creds" or let user input them?
-      // The challenge is to FIND them.
-      // If we use fetch(), we can't easily trigger the browser popup.
-      // So we'll just try to fetch. If 401, we tell user to use browser or Curl?
-      // Actually, let's allow them to input creds via a prompt if they click connect?
-      // Or just prompt() in JS.
-
-      const user = prompt("Enter username (default: admin):", "admin");
-      if (user === null) return;
-      const pass = prompt("Enter password:", "");
-      if (pass === null) return;
-
-      const qs = new URLSearchParams({ seed: ctx.runtimeState.artifact_seed, slug: ctx.runtimeSlug });
-      const creds = btoa(`${user}:${pass}`);
-
-      try {
-        const resp = await fetch('/api/legacy-modem?' + qs, {
-          headers: { 'Authorization': `Basic ${creds}` },
-          cache: 'no-store'
-        });
-        const data = await resp.json().catch(() => null);
-        raw.textContent = JSON.stringify(data, null, 2);
-
-        if (data && data.token) {
-          proofEl.value = data.token;
-          write('Diagnostics accessed. Token retrieved.', 'ok');
-        } else {
-          write(resp.ok ? 'Connected.' : 'Auth failed: ' + (data?.error || resp.status), resp.ok ? 'ok' : 'bad');
-        }
-      } catch (e) { write('Error: ' + e.message, 'bad'); }
-    });
-
-    claimBtn?.addEventListener('click', () => {
-      const v = (proofEl.value || '').trim(); if (!v) { write('Paste proof first.', 'bad'); return; } hideFlag();
-      (async () => { try { const flag = await claimFlag(ctx.launchToken, v, ctx.runtimeSlug); write('Flag claimed.', 'ok'); showFlag(flag); } catch (e) { write('Claim failed: ' + e.message, 'bad'); } })();
-    });
-  }
-
-  // ==========================================================================
-  // SDG 9 MEDIUM CHALLENGES
-  // ==========================================================================
-
-  function renderIotDashboardChallenge(ctx) {
-    // Parameter Pollution / Logic Flaw challenge.
-    // ?device_id=admin is blocked.
-    // ?device_id=admin&device_id=normal might bypass check but process 'admin'.
-
-    const hints = [
-      "The API blocks requests where `device_id` is exactly 'admin'.",
-      "How does the server handle duplicate query parameters?",
-      "Try supplying `device_id` multiple times in the URL.",
-      "Example: `?device_id=admin&device_id=sensor_1` might confuse the filter."
-    ];
-
-    setChallengeSurface(`
-      <div class="challenge-section">
-        ${renderChallengeHeader(
-      ctx.runtimeSlug,
-      'IoT Dashboard',
-      'SDG 9 — Industrial IoT sensor dashboard. Access the restricted admin device.'
-    )}
-
-        <div class="challenge-panel">
-          <div class="text-lg font-bold">Objective</div>
-          <p class="text-base text-secondary mb-4">Access the restricted admin device.</p>
-          
-          <div class="text-lg font-bold">Description</div>
-          <p class="text-base text-secondary">The dashboard lists public sensor devices. An "admin" device holds calibration secrets, but direct access to it is blocked. You need to bypass this restriction.</p>
-        </div>
-
-        <div class="challenge-panel">
-          <p class="surface-note">Sensor Dashboard</p>
-          <div class="actions">
-            <button class="button secondary" id="iot-list" type="button">List Public Devices</button>
-            <button class="button secondary" id="iot-admin" type="button">Request Admin (Blocked)</button>
-          </div>
-          <div class="divider"></div>
-          <p class="surface-note">API Response</p>
-          <pre class="code-block" id="iot-raw" style="min-height: 80px;">(no data yet)</pre>
-        </div>
-
-        <div class="challenge-grid">
-           <div class="challenge-panel">
-             <div class="field">
-               <label class="label" for="iot-proof">Proof code</label>
-               <input class="input" id="iot-proof" name="proof" placeholder="32 hex characters" autocomplete="off" />
-             </div>
-             <div class="actions">
-               <button class="button" id="iot-claim" type="button">Claim flag</button>
-             </div>
-           </div>
-           <div class="challenge-panel">
-             <div class="output" id="iot-output" role="status" aria-live="polite">Waiting for proof...</div>
-             <div class="flag hidden" id="iot-flag" aria-label="Claimed flag"></div>
-           </div>
-        </div>
-
-        ${renderHints(hints)}
-      </div>
-    `);
-
-    setupHintListeners(elements.challengeSurface);
-
-    const raw = document.getElementById('iot-raw');
-    const out = document.getElementById('iot-output');
-    const flagEl = document.getElementById('iot-flag');
-    const proofEl = document.getElementById('iot-proof');
-    const listBtn = document.getElementById('iot-list');
-    const adminBtn = document.getElementById('iot-admin');
-    const claimBtn = document.getElementById('iot-claim');
-
-    function write(m, k) { out.classList.remove('ok', 'bad'); if (k) out.classList.add(k); out.textContent = m; }
-    function showFlag(f) { flagEl.textContent = f; flagEl.classList.remove('hidden'); }
-    function hideFlag() { flagEl.textContent = ''; flagEl.classList.add('hidden'); }
-
-    async function fetchData(params) {
-      if (!ctx.launchToken) { write('Missing launch token.', 'bad'); return; }
-
-      const qs = new URLSearchParams({ seed: ctx.runtimeState.artifact_seed, ...params });
-      // Note: URLSearchParams handles duplicates, but to send duplicate keys we might need to append manually?
-      // Actually, if we pass prompt inputs, we might need a custom manual fetch for advanced users.
-      // But for the button "Request Admin", we blindly send device_id=admin which is blocked.
-      // Users are expected to INTERCEPT/REPLAY the request with pollution using DevTools (e.g. valid approach).
-      // Or we can provide a manual input field?
-      // The hints suggest parameter pollution.
-
-      try {
-        const resp = await fetch('/api/iot-dashboard?' + qs.toString(), { credentials: 'omit', cache: 'no-store' });
-        const data = await resp.json().catch(() => null);
-        raw.textContent = JSON.stringify(data, null, 2);
-
-        if (data && data.secret) {
-          proofEl.value = data.secret;
-          write('Admin device accessed! Secret found.', 'ok');
-        } else {
-          write(resp.ok ? 'Data loaded.' : 'Error: ' + (data?.error || resp.status), resp.ok ? 'ok' : 'bad');
-        }
-      } catch (e) { write('Error: ' + e.message, 'bad'); }
-    }
-
-    listBtn?.addEventListener('click', () => fetchData({}));
-    adminBtn?.addEventListener('click', () => fetchData({ device_id: 'admin' })); // This will be blocked
-
-    claimBtn?.addEventListener('click', () => {
-      const v = (proofEl.value || '').trim(); if (!v) { write('Paste proof first.', 'bad'); return; } hideFlag();
-      (async () => { try { const flag = await claimFlag(ctx.launchToken, v, ctx.runtimeSlug); write('Flag claimed.', 'ok'); showFlag(flag); } catch (e) { write('Claim failed: ' + e.message, 'bad'); } })();
-    });
-  }
-
-  function renderSmartCityGridChallenge(ctx) {
-    // Brute-force / Crypto challenge.
-    // Secret is 8 chars hex. Debug leaks 6. Need to brute-force last 2.
-    // md5(timestamp + secret).
-
-    const hints = [
-      "The secret is 8 hex characters (e.g., `a1b2c3d4`).",
-      "The debug endpoint reveals the first 6 characters.",
-      "You need to brute-force the last 2 characters (only 256 possibilities).",
-      "You can write a script to generate signatures for all possible secrets and try them.",
-      "The timestamp must match the server's time (within a window)."
-    ];
-
-    setChallengeSurface(`
-      <div class="challenge-section">
-        ${renderChallengeHeader(
-      ctx.runtimeSlug,
-      'Smart City Grid',
-      'SDG 9 — Smart city infrastructure grid. Forge a valid authentication signature.'
-    )}
-
-        <div class="challenge-panel">
-          <div class="text-lg font-bold">Objective</div>
-          <p class="text-base text-secondary mb-4">Forge a valid authentication signature.</p>
-          
-          <div class="text-lg font-bold">Description</div>
-          <p class="text-base text-secondary">Grid control requires a signed request. The signature is <code>md5(timestamp + secret)</code>. A debug endpoint leaks partial information. Recover the full secret and forge a valid signature to authenticate.</p>
-        </div>
-
-        <div class="challenge-panel">
-          <p class="surface-note">Grid Control Panel</p>
-          <div class="actions">
-            <button class="button secondary" id="scg-status" type="button">Grid Status</button>
-            <button class="button secondary" id="scg-debug" type="button">Debug Info</button>
-          </div>
-          
-          <div class="field" style="margin-top:12px;">
-             <label class="label" for="scg-sig">Signature (md5 hex)</label>
-             <input class="input" id="scg-sig" placeholder="32-char md5 hash" autocomplete="off" />
-             <p class="help">Signature = md5(timestamp_ms + secret)</p>
-          </div>
-          
-          <div class="actions">
-            <button class="button secondary" id="scg-auth" type="button">Authenticate</button>
-          </div>
-
-          <div class="divider"></div>
-          <p class="surface-note">API Response</p>
-          <pre class="code-block" id="scg-raw" style="min-height: 80px;">(no data yet)</pre>
-        </div>
-
-        <div class="challenge-grid">
-           <div class="challenge-panel">
-             <div class="field">
-               <label class="label" for="scg-proof">Proof code</label>
-               <input class="input" id="scg-proof" name="proof" placeholder="32 hex characters" autocomplete="off" />
-             </div>
-             <div class="actions">
-               <button class="button" id="scg-claim" type="button">Claim flag</button>
-             </div>
-           </div>
-           <div class="challenge-panel">
-             <div class="output" id="scg-output" role="status" aria-live="polite">Waiting for proof...</div>
-             <div class="flag hidden" id="scg-flag" aria-label="Claimed flag"></div>
-           </div>
-        </div>
-
-        ${renderHints(hints)}
-      </div>
-    `);
-
-    setupHintListeners(elements.challengeSurface);
-
-    const raw = document.getElementById('scg-raw');
-    const out = document.getElementById('scg-output');
-    const flagEl = document.getElementById('scg-flag');
-    const proofEl = document.getElementById('scg-proof');
-    const sigEl = document.getElementById('scg-sig');
-
-    // Buttons
-    const statusBtn = document.getElementById('scg-status');
-    const debugBtn = document.getElementById('scg-debug');
-    const authBtn = document.getElementById('scg-auth');
-    const claimBtn = document.getElementById('scg-claim');
-
-    function write(m, k) { out.classList.remove('ok', 'bad'); if (k) out.classList.add(k); out.textContent = m; }
-    function showFlag(f) { flagEl.textContent = f; flagEl.classList.remove('hidden'); }
-    function hideFlag() { flagEl.textContent = ''; flagEl.classList.add('hidden'); }
-
-    async function apiCall(action, extra) {
-      if (!ctx.launchToken) { write('Missing launch token.', 'bad'); return; }
-
-      const params = { seed: ctx.runtimeState.artifact_seed, action };
-      if (extra) Object.assign(params, extra);
-      const qs = new URLSearchParams(params);
-
-      try {
-        const resp = await fetch('/api/smart-city-grid?' + qs.toString(), { credentials: 'omit', cache: 'no-store' });
-        const data = await resp.json().catch(() => null);
-        raw.textContent = JSON.stringify(data, null, 2);
-
-        if (data && data.token) {
-          proofEl.value = data.token;
-          write('Authentication successful! Token recovered.', 'ok');
-        } else {
-          write(resp.ok ? 'Response received.' : 'Error: ' + (data?.error || resp.status), resp.ok ? 'ok' : 'bad');
-        }
-      } catch (e) { write('Error: ' + e.message, 'bad'); }
-    }
-
-    statusBtn?.addEventListener('click', () => apiCall('status'));
-    debugBtn?.addEventListener('click', () => apiCall('debug'));
-    authBtn?.addEventListener('click', () => {
-      const s = (sigEl.value || '').trim();
-      if (!s) { write('Enter a signature.', 'bad'); return; }
-      // We also need to send timestamp? The backend likely checks current time vs what was signed?
-      // The challenge implies user constructs signature based on server timestamp.
-      // The API likely validates md5(now + secret) == sig.
-      // Actually, users usually send timestamp AND signature.
-      // But existing code just sent signature. Let's assume the backend checks against current time window?
-      // Or the 'status' response gives a timestamp to sign?
-      // Let's stick to existing logic: just send signature.
-      apiCall('authenticate', { signature: s });
-    });
-
-    claimBtn?.addEventListener('click', () => {
-      const v = (proofEl.value || '').trim(); if (!v) { write('Paste proof first.', 'bad'); return; } hideFlag();
-      (async () => { try { const flag = await claimFlag(ctx.launchToken, v, ctx.runtimeSlug); write('Flag claimed.', 'ok'); showFlag(flag); } catch (e) { write('Claim failed: ' + e.message, 'bad'); } })();
-    });
-  }
-
-  function renderDroneFlightPathChallenge(ctx) {
-    // Prototype Pollution challenge.
-    // Merge logic allows __proto__ or similar.
-    // Goal: escalate privileges to get flag.
-
-    const hints = [
-      "The API uses a naive object merge function.",
-      "Certain JSON keys can modify the object prototype.",
-      "Try adding `__proto__` to your JSON payload.",
-      "Look for properties that might control privileges (e.g., `isAdmin`, `role`, `access_level`).",
-      "Payload structure: `{\"__proto__\": {\"isAdmin\": true}}` might work."
-    ];
-
-    setChallengeSurface(`
-      <div class="challenge-section">
-        ${renderChallengeHeader(
-      ctx.runtimeSlug,
-      'Drone Flight Path',
-      'SDG 9 — Drone delivery fleet controller. Escalate to admin privileges via the flight plan API.'
-    )}
-
-        <div class="challenge-panel">
-          <div class="text-lg font-bold">Objective</div>
-          <p class="text-base text-secondary mb-4">Escalate to admin privileges via the flight plan API.</p>
-          
-          <div class="text-lg font-bold">Description</div>
-          <p class="text-base text-secondary">Submit a JSON flight plan to register a delivery route. The system merges your plan into the drone state object. Admin flights reveal restricted corridor data. Can you escalate your privileges?</p>
-        </div>
-
-        <div class="challenge-panel">
-          <p class="surface-note">Flight Controller</p>
-          <div class="actions">
-            <button class="button secondary" id="dfp-info" type="button">Get Fleet Info</button>
-          </div>
-          
-          <div class="field" style="margin-top:12px;">
-            <label class="label" for="dfp-body">Flight Plan JSON</label>
-            <textarea class="input" id="dfp-body" rows="5" spellcheck="false">{"drone_id": "DRN-007", "waypoints": [{"lat": 6.5, "lng": 3.4, "alt": 120}]}</textarea>
-            <p class="help">JSON payload to merge into drone state.</p>
-          </div>
-          
-          <div class="actions">
-            <button class="button secondary" id="dfp-send" type="button">Submit Flight Plan (POST)</button>
-          </div>
-
-          <div class="divider"></div>
-          <p class="surface-note">API Response</p>
-          <pre class="code-block" id="dfp-raw" style="min-height: 80px;">(no data yet)</pre>
-        </div>
-
-        <div class="challenge-grid">
-           <div class="challenge-panel">
-             <div class="field">
-               <label class="label" for="dfp-proof">Proof code</label>
-               <input class="input" id="dfp-proof" name="proof" placeholder="32 hex characters" autocomplete="off" />
-             </div>
-             <div class="actions">
-               <button class="button" id="dfp-claim" type="button">Claim flag</button>
-             </div>
-           </div>
-           <div class="challenge-panel">
-             <div class="output" id="dfp-output" role="status" aria-live="polite">Waiting for proof...</div>
-             <div class="flag hidden" id="dfp-flag" aria-label="Claimed flag"></div>
-           </div>
-        </div>
-
-        ${renderHints(hints)}
-      </div>
-    `);
-
-    setupHintListeners(elements.challengeSurface);
-
-    const raw = document.getElementById('dfp-raw');
-    const out = document.getElementById('dfp-output');
-    const flagEl = document.getElementById('dfp-flag');
-    const proofEl = document.getElementById('dfp-proof');
-    const bodyEl = document.getElementById('dfp-body');
-    const infoBtn = document.getElementById('dfp-info');
-    const sendBtn = document.getElementById('dfp-send');
-    const claimBtn = document.getElementById('dfp-claim');
-
-    function write(m, k) { out.classList.remove('ok', 'bad'); if (k) out.classList.add(k); out.textContent = m; }
-    function showFlag(f) { flagEl.textContent = f; flagEl.classList.remove('hidden'); }
-    function hideFlag() { flagEl.textContent = ''; flagEl.classList.add('hidden'); }
-
-    infoBtn?.addEventListener('click', async () => {
-      const qs = new URLSearchParams({ seed: ctx.runtimeState.artifact_seed, slug: ctx.runtimeSlug });
-      try {
-        const resp = await fetch('/api/drone-flight-path?' + qs, { credentials: 'omit', cache: 'no-store' });
-        const data = await resp.json().catch(() => null);
-        raw.textContent = JSON.stringify(data, null, 2);
-        write('Info loaded.', 'ok');
-      } catch (e) { write('Error: ' + e.message, 'bad'); }
-    });
-
-    sendBtn?.addEventListener('click', async () => {
-      const qs = new URLSearchParams({ seed: ctx.runtimeState.artifact_seed, slug: ctx.runtimeSlug });
-      const bodyStr = (bodyEl.value || '').trim();
-
-      try {
-        // Check valid JSON first to avoid syntax errors? Or let server handle it?
-        // Let's let server handle it, but maybe warn if empty.
-        try { JSON.parse(bodyStr); } catch (e) { write('Invalid JSON format.', 'bad'); return; }
-
-        const resp = await fetch('/api/drone-flight-path?' + qs, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: bodyStr,
-          credentials: 'omit',
-          cache: 'no-store'
-        });
-        const data = await resp.json().catch(() => null);
-        raw.textContent = JSON.stringify(data, null, 2);
-
-        if (data && data.flag) {
-          proofEl.value = data.flag; // API returns flag directly if successful?
-          // Wait, usually returns 'secret' or 'token'. Let's check previous implementation.
-          // Previous code: data?.access === 'ADMIN' ? 'ADMIN access granted!'
-          // It didn't seem to set proofEl.value automatically? 
-          // "Admin flights reveal restricted corridor data." -> suggests data contains the secret.
-          // Let's assume data.secret or data.proof.
-          if (data.secret) {
-            proofEl.value = data.secret;
-            write('Admin access granted! Secret found.', 'ok');
-          } else {
-            write('Admin access granted!', 'ok');
-          }
-        } else {
-          write(resp.ok ? (data?.access === 'ADMIN' ? 'ADMIN access granted!' : 'Standard access. No secrets revealed.') : 'Error: ' + (data?.error || resp.status), resp.ok ? 'ok' : 'bad');
-        }
-      } catch (e) { write('Error: ' + e.message, 'bad'); }
-    });
-
-    claimBtn?.addEventListener('click', () => {
-      const v = (proofEl.value || '').trim(); if (!v) { write('Paste proof first.', 'bad'); return; } hideFlag();
-      (async () => { try { const flag = await claimFlag(ctx.launchToken, v, ctx.runtimeSlug); write('Flag claimed.', 'ok'); showFlag(flag); } catch (e) { write('Claim failed: ' + e.message, 'bad'); } })();
-    });
-  }
-
-  // ==========================================================================
-  // SDG 9 HARD CHALLENGES
-  // ==========================================================================
-
-  function renderChemicalPlantChallenge(ctx) {
-    // Crypto / Reverse Engineering challenge.
-    // Rolling XOR key.
-
-    const hints = [
-      "XOR is its own inverse operation (A ^ B = C => A ^ C = B).",
-      "The key stream repeats or follows a predictable pattern (LFSR).",
-      "Get a 'keyhint' to see a longer sample of the keystream.",
-      "Derive the keystream from the known plaintext/ciphertext sample.",
-      "Encrypt the command 'EMERGENCY_DUMP' using the recovered keystream."
-    ];
-
-    setChallengeSurface(`
-      <div class="challenge-section">
-        ${renderChallengeHeader(
-      ctx.runtimeSlug,
-      'Chemical Plant',
-      'SDG 9 — SCADA interface with rolling XOR encryption. Reverse the key and forge a command.'
-    )}
-
-        <div class="challenge-panel">
-          <div class="text-lg font-bold">Objective</div>
-          <p class="text-base text-secondary mb-4">Reverse the key and forge a command.</p>
-          
-          <div class="text-lg font-bold">Description</div>
-          <p class="text-base text-secondary">The plant control system encrypts commands with a rolling XOR key. You are given a known plaintext/ciphertext pair. Recover the key stream and encrypt the emergency command to gain diagnostic access.</p>
-        </div>
-
-        <div class="challenge-panel">
-          <p class="surface-note">SCADA Control Interface</p>
-          <div class="actions">
-            <button class="button secondary" id="cp-status" type="button">Get Status + Sample</button>
-            <button class="button secondary" id="cp-keyhint" type="button">Get Key Hint</button>
-          </div>
-          
-          <div class="field" style="margin-top:12px;">
-            <label class="label" for="cp-payload">Encrypted Command (hex)</label>
-            <input class="input" id="cp-payload" placeholder="hex-encoded encrypted EMERGENCY_DUMP" autocomplete="off" />
-            <p class="help">Send encrypted 'EMERGENCY_DUMP' command.</p>
-          </div>
-          
-          <div class="actions">
-            <button class="button secondary" id="cp-send" type="button">Send Command (POST)</button>
-          </div>
-
-          <div class="divider"></div>
-          <p class="surface-note">API Response</p>
-          <pre class="code-block" id="cp-raw" style="min-height: 80px;">(no data yet)</pre>
-        </div>
-
-        <div class="challenge-grid">
-           <div class="challenge-panel">
-             <div class="field">
-               <label class="label" for="cp-proof">Proof code</label>
-               <input class="input" id="cp-proof" name="proof" placeholder="32 hex characters" autocomplete="off" />
-             </div>
-             <div class="actions">
-               <button class="button" id="cp-claim" type="button">Claim flag</button>
-             </div>
-           </div>
-           <div class="challenge-panel">
-             <div class="output" id="cp-output" role="status" aria-live="polite">Waiting for proof...</div>
-             <div class="flag hidden" id="cp-flag" aria-label="Claimed flag"></div>
-           </div>
-        </div>
-
-        ${renderHints(hints)}
-      </div>
-    `);
-
-    setupHintListeners(elements.challengeSurface);
-
-    const raw = document.getElementById('cp-raw');
-    const out = document.getElementById('cp-output');
-    const flagEl = document.getElementById('cp-flag');
-    const proofEl = document.getElementById('cp-proof');
-    const payloadEl = document.getElementById('cp-payload');
-    const statusBtn = document.getElementById('cp-status');
-    const keyhintBtn = document.getElementById('cp-keyhint');
-    const sendBtn = document.getElementById('cp-send');
-    const claimBtn = document.getElementById('cp-claim');
-
-    function write(m, k) { out.classList.remove('ok', 'bad'); if (k) out.classList.add(k); out.textContent = m; }
-    function showFlag(f) { flagEl.textContent = f; flagEl.classList.remove('hidden'); }
-    function hideFlag() { flagEl.textContent = ''; flagEl.classList.add('hidden'); }
-
-    async function apiGet(action) {
-      if (!ctx.launchToken) { write('Missing launch token.', 'bad'); return; }
-      const qs = new URLSearchParams({ seed: ctx.runtimeState.artifact_seed, action });
-      try {
-        const resp = await fetch('/api/chemical-plant?' + qs, { credentials: 'omit', cache: 'no-store' });
-        const data = await resp.json().catch(() => null);
-        raw.textContent = JSON.stringify(data, null, 2);
-        write('Response received.', 'ok');
-      } catch (e) { write('Error: ' + e.message, 'bad'); }
-    }
-
-    statusBtn?.addEventListener('click', () => apiGet('status'));
-    keyhintBtn?.addEventListener('click', () => apiGet('keyhint'));
-
-    sendBtn?.addEventListener('click', async () => {
-      const p = (payloadEl.value || '').trim();
-      if (!p) { write('Enter payload.', 'bad'); return; }
-
-      const qs = new URLSearchParams({ seed: ctx.runtimeState.artifact_seed, action: 'command' });
-
-      try {
-        const resp = await fetch('/api/chemical-plant?' + qs, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ payload: p }),
-          credentials: 'omit',
-          cache: 'no-store'
-        });
-        const data = await resp.json().catch(() => null);
-        raw.textContent = JSON.stringify(data, null, 2);
-
-        if (data && data.flag) {
-          proofEl.value = data.flag;
-          write('Command accepted! Diagnostic access granted.', 'ok');
-        } else {
-          write(resp.ok ? 'Command accepted.' : 'Rejected: ' + (data?.error || resp.status), resp.ok ? 'ok' : 'bad');
-        }
-      } catch (e) { write('Error: ' + e.message, 'bad'); }
-    });
-
-    claimBtn?.addEventListener('click', () => {
-      const v = (proofEl.value || '').trim(); if (!v) { write('Paste proof first.', 'bad'); return; } hideFlag();
-      (async () => { try { const flag = await claimFlag(ctx.launchToken, v, ctx.runtimeSlug); write('Flag claimed.', 'ok'); showFlag(flag); } catch (e) { write('Claim failed: ' + e.message, 'bad'); } })();
-    });
-  }
-
-  function renderSatelliteUplinkChallenge(ctx) {
-    // Binary Protocol / Checksum challenge.
-    // Spec: MAGIC (4) + VER (1) + CMD (1) + LEN (2) + PAYLOAD (N) + CKSUM (2)
-    // CMD 0x42 = ADMIN. Payload: "admin=1"?
-
-    const hints = [
-      "The protocol expects a hex-encoded binary string.",
-      "Review the protocol specification from the 'Info' button.",
-      "Structure: `MAGIC` (4) `VER` (1) `CMD` (1) `LEN` (2) `PAYLOAD` (N) `CKSUM` (2).",
-      "Command 0x42 requires a specific payload (try `admin_access`).",
-      "The checksum is a 16-bit sum of all previous bytes."
-    ];
-
-    setChallengeSurface(`
-      <div class="challenge-section">
-        ${renderChallengeHeader(
-      ctx.runtimeSlug,
-      'Satellite Uplink',
-      'SDG 9 — Satellite communication terminal with a custom binary protocol. Craft a valid admin packet.'
-    )}
-
-        <div class="challenge-panel">
-          <div class="text-lg font-bold">Objective</div>
-          <p class="text-base text-secondary mb-4">Craft a valid admin packet to dump admin data.</p>
-          
-          <div class="text-lg font-bold">Description</div>
-          <p class="text-base text-secondary">The uplink accepts hex-encoded binary packets with a specific structure: magic bytes, version, command, payload, and checksum. Craft a packet with CMD=0x42 and the correct authorization payload to dump admin data.</p>
-        </div>
-
-        <div class="challenge-panel">
-          <p class="surface-note">Uplink Terminal</p>
-          <div class="actions">
-            <button class="button secondary" id="su-info" type="button">Get Protocol Info</button>
-          </div>
-          
-          <div class="field" style="margin-top:12px;">
-            <label class="label" for="su-packet">Binary Packet (Hex encoded)</label>
-            <input class="input" id="su-packet" placeholder="e.g. 5341543001..." autocomplete="off" />
-            <p class="help">Magic: SAT0 (53415430). Checksum is big-endian.</p>
-          </div>
-          
-          <div class="actions">
-            <button class="button secondary" id="su-send" type="button">Send Packet (POST)</button>
-          </div>
-
-          <div class="divider"></div>
-          <p class="surface-note">Terminal Output</p>
-          <pre class="code-block" id="su-raw" style="min-height: 80px;">(no data yet)</pre>
-        </div>
-
-        <div class="challenge-grid">
-           <div class="challenge-panel">
-             <div class="field">
-               <label class="label" for="su-proof">Proof code</label>
-               <input class="input" id="su-proof" name="proof" placeholder="32 hex characters" autocomplete="off" />
-             </div>
-             <div class="actions">
-               <button class="button" id="su-claim" type="button">Claim flag</button>
-             </div>
-           </div>
-           <div class="challenge-panel">
-             <div class="output" id="su-output" role="status" aria-live="polite">Waiting for proof...</div>
-             <div class="flag hidden" id="su-flag" aria-label="Claimed flag"></div>
-           </div>
-        </div>
-
-        ${renderHints(hints)}
-      </div>
-    `);
-
-    setupHintListeners(elements.challengeSurface);
-
-    const raw = document.getElementById('su-raw');
-    const out = document.getElementById('su-output');
-    const flagEl = document.getElementById('su-flag');
-    const proofEl = document.getElementById('su-proof');
-    const packetEl = document.getElementById('su-packet');
-    const infoBtn = document.getElementById('su-info');
-    const sendBtn = document.getElementById('su-send');
-    const claimBtn = document.getElementById('su-claim');
-
-    function write(m, k) { out.classList.remove('ok', 'bad'); if (k) out.classList.add(k); out.textContent = m; }
-    function showFlag(f) { flagEl.textContent = f; flagEl.classList.remove('hidden'); }
-    function hideFlag() { flagEl.textContent = ''; flagEl.classList.add('hidden'); }
-
-    infoBtn?.addEventListener('click', async () => {
-      const qs = new URLSearchParams({ seed: ctx.runtimeState.artifact_seed, action: 'info' });
-      try {
-        const resp = await fetch('/api/satellite-uplink?' + qs, { credentials: 'omit', cache: 'no-store' });
-        const data = await resp.json().catch(() => null);
-        raw.textContent = JSON.stringify(data, null, 2);
-        write('Protocol info loaded.', 'ok');
-      } catch (e) { write('Error: ' + e.message, 'bad'); }
-    });
-
-    sendBtn?.addEventListener('click', async () => {
-      const p = (packetEl.value || '').trim();
-      if (!p) { write('Enter packet hex.', 'bad'); return; }
-
-      const qs = new URLSearchParams({ seed: ctx.runtimeState.artifact_seed, action: 'send' });
-
-      try {
-        const resp = await fetch('/api/satellite-uplink?' + qs, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ packet: p }),
-          credentials: 'omit',
-          cache: 'no-store'
-        });
-        const data = await resp.json().catch(() => null);
-        raw.textContent = JSON.stringify(data, null, 2);
-
-        if (data && data.flag) {
-          proofEl.value = data.flag;
-          write('Packet accepted. Admin access granted.', 'ok');
-        } else {
-          write(resp.ok ? 'Packet accepted.' : 'Rejected: ' + (data?.error || resp.status), resp.ok ? 'ok' : 'bad');
-        }
-      } catch (e) { write('Error: ' + e.message, 'bad'); }
-    });
-
-    claimBtn?.addEventListener('click', () => {
-      const v = (proofEl.value || '').trim(); if (!v) { write('Paste proof first.', 'bad'); return; } hideFlag();
-      (async () => { try { const flag = await claimFlag(ctx.launchToken, v, ctx.runtimeSlug); write('Flag claimed.', 'ok'); showFlag(flag); } catch (e) { write('Claim failed: ' + e.message, 'bad'); } })();
-    });
-  }
-
-  function renderBioLabAirlockChallenge(ctx) {
-    // NoSQL Injection / Blind Extraction challenge.
-    // Goal: find hidden field name, then extract value via regex/boolean inference.
-
-    const hints = [
-      "The database likely uses a NoSQL-style query language (like MongoDB).",
-      "Use `?action=fields` to list all field names and identify the hidden one.",
-      "Use `{\"$exists\": true}` on the hidden field to find the correct record ID.",
-      "Use the `extract` action to blindly test the value.",
-      "The `regex` parameter allows character-by-character extraction (e.g. `^A`, `^B`...)."
-    ];
-
-    setChallengeSurface(`
-      <div class="challenge-section">
-        ${renderChallengeHeader(
-      ctx.runtimeSlug,
-      'Bio-Lab Airlock',
-      'SDG 9 — Specimen database with blind extraction. Discover a hidden field and extract its value.'
-    )}
-
-        <div class="challenge-panel">
-          <div class="text-lg font-bold">Objective</div>
-          <p class="text-base text-secondary mb-4">Discover a hidden field and extract its value.</p>
-          
-          <div class="text-lg font-bold">Description</div>
-          <p class="text-base text-secondary">The specimen database has a documented schema, but one record contains an undocumented field with a randomized name. The field's value is the proof. Use NoSQL-style operators to discover the field name, identify which record has it, and extract the value character by character.</p>
-        </div>
-
-        <div class="challenge-panel">
-          <p class="surface-note">Database Interface</p>
-          <div class="actions">
-            <button class="button secondary" id="bla-schema" type="button">View Schema</button>
-            <button class="button secondary" id="bla-fields" type="button">List All Fields</button>
-          </div>
-          
-          <div class="field" style="margin-top:12px;">
-            <label class="label" for="bla-query">Query Filter (JSON)</label>
-            <textarea class="input" id="bla-query" rows="3" spellcheck="false">{"biosafety_level": {"$gte": 3}}</textarea>
-            <p class="help">Standard NoSQL query filter.</p>
-          </div>
-          <div class="actions">
-            <button class="button secondary" id="bla-qsend" type="button">Execute Query (POST)</button>
-          </div>
-
-          <div class="divider"></div>
-          
-          <p class="surface-note">Blind Extraction Tool</p>
-          <div class="field"><label class="label" for="bla-rid">Record ID</label><input class="input" id="bla-rid" value="BIO-005" autocomplete="off" /></div>
-          <div class="field"><label class="label" for="bla-regex">Regex Pattern</label><input class="input" id="bla-regex" placeholder="^[0-9a-f]" autocomplete="off" /></div>
-          <div class="actions"><button class="button secondary" id="bla-extract" type="button">Test Regex (Boolean)</button></div>
-          
-          <div class="divider"></div>
-          <p class="surface-note">API Response</p>
-          <pre class="code-block" id="bla-raw" style="min-height: 80px;">(no data yet)</pre>
-        </div>
-
-        <div class="challenge-grid">
-           <div class="challenge-panel">
-             <div class="field">
-               <label class="label" for="bla-proof">Proof code</label>
-               <input class="input" id="bla-proof" name="proof" placeholder="32 hex characters" autocomplete="off" />
-             </div>
-             <div class="actions">
-               <button class="button" id="bla-claim" type="button">Claim flag</button>
-             </div>
-           </div>
-           <div class="challenge-panel">
-             <div class="output" id="bla-output" role="status" aria-live="polite">Waiting for proof...</div>
-             <div class="flag hidden" id="bla-flag" aria-label="Claimed flag"></div>
-           </div>
-        </div>
-
-        ${renderHints(hints)}
-      </div>
-    `);
-
-    setupHintListeners(elements.challengeSurface);
-
-    const raw = document.getElementById('bla-raw');
-    const out = document.getElementById('bla-output');
-    const flagEl = document.getElementById('bla-flag');
-    const proofEl = document.getElementById('bla-proof');
-    const schemaBtn = document.getElementById('bla-schema');
-    const fieldsBtn = document.getElementById('bla-fields');
-    const queryBtn = document.getElementById('bla-qsend');
-    const extractBtn = document.getElementById('bla-extract');
-    const claimBtn = document.getElementById('bla-claim');
-
-    function write(m, k) { out.classList.remove('ok', 'bad'); if (k) out.classList.add(k); out.textContent = m; }
-    function showFlag(f) { flagEl.textContent = f; flagEl.classList.remove('hidden'); }
-    function hideFlag() { flagEl.textContent = ''; flagEl.classList.add('hidden'); }
-
-    async function apiGet(action) {
-      const qs = new URLSearchParams({ seed: ctx.runtimeState.artifact_seed, action });
-      try {
-        const resp = await fetch('/api/bio-lab-airlock?' + qs, { credentials: 'omit', cache: 'no-store' });
-        const data = await resp.json().catch(() => null);
-        raw.textContent = JSON.stringify(data, null, 2);
-        write('Response received.', 'ok');
-      } catch (e) { write('Error: ' + e.message, 'bad'); }
-    }
-
-    schemaBtn?.addEventListener('click', () => apiGet('schema'));
-    fieldsBtn?.addEventListener('click', () => apiGet('fields'));
+    schemaBtn?.addEventListener('click', () => getAction('schema').catch(e => write('Error: ' + e.message, 'bad')));
+    fieldsBtn?.addEventListener('click', () => getAction('fields').catch(e => write('Error: ' + e.message, 'bad')));
 
     queryBtn?.addEventListener('click', async () => {
-      const q = (document.getElementById('bla-query').value || '').trim();
-
-      try { JSON.parse(q); } catch (e) { write('Invalid Query JSON.', 'bad'); return; }
-
-      const qs = new URLSearchParams({ seed: ctx.runtimeState.artifact_seed, action: 'query' });
+      let filter;
+      try { filter = JSON.parse(filterEl.value || '{}'); } catch { write('Invalid JSON filter.', 'bad'); return; }
       try {
-        const resp = await fetch('/api/bio-lab-airlock?' + qs, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ filter: JSON.parse(q) }),
-          credentials: 'omit',
-          cache: 'no-store'
-        });
-        const data = await resp.json().catch(() => null);
+        const data = await postAction('query', { filter });
         raw.textContent = JSON.stringify(data, null, 2);
-        write('Query returned ' + (data?.count || 0) + ' results.', 'ok');
+        write(data?.ok ? 'Query complete.' : 'Error: ' + (data?.error || '?'), data?.ok ? 'ok' : 'bad');
       } catch (e) { write('Error: ' + e.message, 'bad'); }
     });
 
     extractBtn?.addEventListener('click', async () => {
-      const rid = (document.getElementById('bla-rid').value || '').trim();
-      const regex = (document.getElementById('bla-regex').value || '').trim();
-      if (!rid || !regex) { write('Enter record ID and regex.', 'bad'); return; }
-
-      const qs = new URLSearchParams({ seed: ctx.runtimeState.artifact_seed, action: 'extract' });
+      const regex = (regexEl.value || '').trim();
+      if (!regex) { write('Enter a regex pattern.', 'bad'); return; }
       try {
-        const resp = await fetch('/api/bio-lab-airlock?' + qs, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ record_id: rid, regex }),
-          credentials: 'omit',
-          cache: 'no-store'
-        });
-        const data = await resp.json().catch(() => null);
+        const data = await postAction('extract', { record_id: 'TRL-CLASSIFIED', regex });
         raw.textContent = JSON.stringify(data, null, 2);
-        write(data?.match ? 'MATCH: regex matched!' : 'NO MATCH.', data?.match ? 'ok' : 'bad');
+        write(data?.ok ? (data.match ? 'MATCH — pattern found in hidden field.' : 'No match.') : 'Error: ' + (data?.error || '?'), data?.ok ? 'ok' : 'bad');
       } catch (e) { write('Error: ' + e.message, 'bad'); }
     });
 
@@ -2532,133 +991,327 @@
     });
   }
 
-  function renderAiOptimizerChallenge(ctx) {
-    // Math / Z3 / Brute-force challenge.
-    // 2-layer NN. Find input that gives target output.
-
+  // ── Hard: Clinical Gateway SSRF Chain ────────────────────────────────────
+  function renderClinicalGatewaySsrfChallenge(ctx) {
     const hints = [
-      "The model is a simple 2-layer Neural Network.",
-      "Hidden layer has ReLU activation (max(0, x)).",
-      "Dump the model weights to understand the math.",
-      "You need to solve for inputs [a,b,c,d] such that f(a,b,c,d) = target.",
-      "Since inputs are small integers, brute-forcing or Z3/SMT solvers work well."
+      'The proxy endpoint validates URLs with a naive string check, not a proper hostname parser.',
+      'RFC 3986 URLs support a userinfo component: http://user:pass@host/path — the real host is "host".',
+      'A URL containing "health-api.who.int" as userinfo can fool a string-based allowlist while routing to a different host.',
+      'The system info endpoint reveals internal service hostnames. The internal config service at /secrets exposes the JWT signing secret.',
+      'The admin portal is on the internal network too — direct ?action=admin access is blocked. Route through the proxy again.',
+      'To reach the admin portal via SSRF: http://health-api.who.int@admin-portal.mednet.local/?token=<jwt>',
     ];
 
     setChallengeSurface(`
       <div class="challenge-section">
-        ${renderChallengeHeader(
-      ctx.runtimeSlug,
-      'AI Optimizer',
-      'SDG 9 — Neural network infrastructure optimizer. Reverse the model to find the magic input.'
-    )}
-
+        ${renderChallengeHeader(ctx.runtimeSlug, 'Clinical Gateway SSRF', 'SDG 3 — SSRF allowlist bypass → internal config → JWT forge → admin flag.')}
         <div class="challenge-panel">
           <div class="text-lg font-bold">Objective</div>
-          <p class="text-base text-secondary mb-4">Reverse the model to find the magic input.</p>
-          
+          <p class="text-base text-secondary mb-4">Chain SSRF exploitation with JWT forgery to retrieve the network integrity token from the admin endpoint.</p>
           <div class="text-lg font-bold">Description</div>
-          <p class="text-base text-secondary">A 2-layer neural network (4→4 ReLU → 1 linear) predicts infrastructure efficiency. You are given the weights, biases, and a target output value. Find an integer input vector [a,b,c,d] that produces exactly the target output.</p>
+          <p class="text-base text-secondary">The MedFed API Gateway proxies requests to trusted WHO health data sources. Internal microservices on the private mednet.local network hold the JWT signing secret and the admin portal. Exploit the proxy's URL allowlist with userinfo injection to reach the internal config service, extract the JWT secret, forge an admin token, then use SSRF a second time to reach the admin portal through the proxy.</p>
         </div>
-
         <div class="challenge-panel">
-          <p class="surface-note">Model Interface</p>
+          <p class="surface-note">MedFed API Gateway v3.0</p>
           <div class="actions">
-            <button class="button secondary" id="aio-info" type="button">Get Target Info</button>
-            <button class="button secondary" id="aio-model" type="button">Dump Model Weights</button>
+            <button class="button secondary" id="cgs-info" type="button">GET: System Info</button>
           </div>
-          
-          <div class="field" style="margin-top:12px;">
-            <label class="label" for="aio-input">Input Vector [a,b,c,d]</label>
-            <input class="input" id="aio-input" placeholder="e.g. [1, 2, -3, 4]" autocomplete="off" />
-            <p class="help">Enter 4 integers representing the input features.</p>
+          <div class="divider"></div>
+          <div class="field">
+            <label class="label" for="cgs-url">Proxy URL</label>
+            <input class="input" id="cgs-url" placeholder="e.g. http://health-api.who.int/" autocomplete="off" />
           </div>
-          
           <div class="actions">
-            <button class="button secondary" id="aio-infer" type="button">Run Inference (POST)</button>
+            <button class="button secondary" id="cgs-proxy" type="button">GET: Send Proxy Request</button>
           </div>
-
+          <div class="divider"></div>
+          <div class="field">
+            <label class="label" for="cgs-token">JWT Token (forged) — for second SSRF step</label>
+            <input class="input" id="cgs-token" placeholder="Paste HS256-signed JWT here..." autocomplete="off" />
+          </div>
+          <div class="actions">
+            <button class="button secondary" id="cgs-admin" type="button">GET: Access Admin via Proxy (SSRF step 2)</button>
+          </div>
           <div class="divider"></div>
           <p class="surface-note">API Response</p>
-          <pre class="code-block" id="aio-raw" style="min-height: 80px;">(no data yet)</pre>
+          <pre class="code-block" id="cgs-raw" style="min-height:100px;">(no data yet)</pre>
         </div>
-
         <div class="challenge-grid">
-           <div class="challenge-panel">
-             <div class="field">
-               <label class="label" for="aio-proof">Proof code</label>
-               <input class="input" id="aio-proof" name="proof" placeholder="32 hex characters" autocomplete="off" />
-             </div>
-             <div class="actions">
-               <button class="button" id="aio-claim" type="button">Claim flag</button>
-             </div>
-           </div>
-           <div class="challenge-panel">
-             <div class="output" id="aio-output" role="status" aria-live="polite">Waiting for proof...</div>
-             <div class="flag hidden" id="aio-flag" aria-label="Claimed flag"></div>
-           </div>
+          <div class="challenge-panel">
+            <div class="field">
+              <label class="label" for="cgs-proof">Proof code</label>
+              <input class="input" id="cgs-proof" name="proof" placeholder="32 hex characters" autocomplete="off" />
+            </div>
+            <div class="actions">
+              <button class="button" id="cgs-claim" type="button">Claim flag</button>
+            </div>
+          </div>
+          <div class="challenge-panel">
+            <div class="output" id="cgs-output" role="status" aria-live="polite">Waiting for proof...</div>
+            <div class="flag hidden" id="cgs-flag" aria-label="Claimed flag"></div>
+          </div>
         </div>
-
         ${renderHints(hints)}
       </div>
     `);
 
     setupHintListeners(elements.challengeSurface);
 
-    const raw = document.getElementById('aio-raw');
-    const out = document.getElementById('aio-output');
-    const flagEl = document.getElementById('aio-flag');
-    const proofEl = document.getElementById('aio-proof');
-    const inputEl = document.getElementById('aio-input');
-    const infoBtn = document.getElementById('aio-info');
-    const modelBtn = document.getElementById('aio-model');
-    const inferBtn = document.getElementById('aio-infer');
-    const claimBtn = document.getElementById('aio-claim');
+    const raw = document.getElementById('cgs-raw');
+    const out = document.getElementById('cgs-output');
+    const flagEl = document.getElementById('cgs-flag');
+    const proofEl = document.getElementById('cgs-proof');
+    const urlEl = document.getElementById('cgs-url');
+    const tokenEl = document.getElementById('cgs-token');
+    const infoBtn = document.getElementById('cgs-info');
+    const proxyBtn = document.getElementById('cgs-proxy');
+    const adminBtn = document.getElementById('cgs-admin');
+    const claimBtn = document.getElementById('cgs-claim');
+    const seed = ctx.runtimeState.artifact_seed;
 
     function write(m, k) { out.classList.remove('ok', 'bad'); if (k) out.classList.add(k); out.textContent = m; }
     function showFlag(f) { flagEl.textContent = f; flagEl.classList.remove('hidden'); }
     function hideFlag() { flagEl.textContent = ''; flagEl.classList.add('hidden'); }
 
-    async function apiGet(action) {
-      const qs = new URLSearchParams({ seed: ctx.runtimeState.artifact_seed, action });
+    infoBtn?.addEventListener('click', async () => {
       try {
-        const resp = await fetch('/api/ai-optimizer?' + qs, { credentials: 'omit', cache: 'no-store' });
+        const resp = await fetch('/api/clinical-gateway-ssrf?seed=' + seed + '&action=info', { credentials: 'omit', cache: 'no-store' });
         const data = await resp.json().catch(() => null);
         raw.textContent = JSON.stringify(data, null, 2);
-        write('Info loaded.', 'ok');
+        write(resp.ok ? 'System info loaded. Note the architecture.' : 'Error: ' + (data?.error || resp.status), resp.ok ? 'ok' : 'bad');
       } catch (e) { write('Error: ' + e.message, 'bad'); }
-    }
+    });
 
-    infoBtn?.addEventListener('click', () => apiGet('info'));
-    modelBtn?.addEventListener('click', () => apiGet('model'));
-
-    inferBtn?.addEventListener('click', async () => {
-      const v = (inputEl.value || '').trim();
-      let vec;
-      try { vec = JSON.parse(v); } catch (e) {
-        // Allow comma separated?
-        if (v.includes(',')) vec = v.split(',').map(Number);
-        else { write('Invalid JSON array.', 'bad'); return; }
-      }
-      if (!Array.isArray(vec) || vec.length !== 4) { write('Input must be array of 4 integers.', 'bad'); return; }
-
-      const qs = new URLSearchParams({ seed: ctx.runtimeState.artifact_seed, action: 'inference' });
+    proxyBtn?.addEventListener('click', async () => {
+      const proxyUrl = (urlEl.value || '').trim();
+      if (!proxyUrl) { write('Enter a proxy URL.', 'bad'); return; }
       try {
-        const resp = await fetch('/api/ai-optimizer?' + qs, {
+        const resp = await fetch('/api/clinical-gateway-ssrf?seed=' + seed + '&action=proxy&url=' + encodeURIComponent(proxyUrl), { credentials: 'omit', cache: 'no-store' });
+        const data = await resp.json().catch(() => null);
+        raw.textContent = JSON.stringify(data, null, 2);
+        write(resp.ok ? 'Proxy response received.' : 'Blocked: ' + (data?.error || resp.status), resp.ok ? 'ok' : 'bad');
+      } catch (e) { write('Error: ' + e.message, 'bad'); }
+    });
+
+    adminBtn?.addEventListener('click', async () => {
+      const token = (tokenEl.value || '').trim();
+      if (!token) { write('Enter a forged JWT token.', 'bad'); return; }
+      try {
+        const ssrfUrl = 'http://health-api.who.int@admin-portal.mednet.local/?token=' + encodeURIComponent(token);
+        const resp = await fetch('/api/clinical-gateway-ssrf?seed=' + seed + '&action=proxy&url=' + encodeURIComponent(ssrfUrl), { credentials: 'omit', cache: 'no-store' });
+        const data = await resp.json().catch(() => null);
+        raw.textContent = JSON.stringify(data, null, 2);
+        const token2 = data?.response?.network_integrity_token;
+        if (token2) { proofEl.value = token2; write('Admin access granted via internal proxy! Network integrity token obtained.', 'ok'); }
+        else { write(resp.ok ? 'Response received.' : 'Error: ' + (data?.error || resp.status), resp.ok ? 'ok' : 'bad'); }
+      } catch (e) { write('Error: ' + e.message, 'bad'); }
+    });
+
+    claimBtn?.addEventListener('click', () => {
+      const v = (proofEl.value || '').trim(); if (!v) { write('Paste proof first.', 'bad'); return; } hideFlag();
+      (async () => { try { const flag = await claimFlag(ctx.launchToken, v, ctx.runtimeSlug); write('Flag claimed.', 'ok'); showFlag(flag); } catch (e) { write('Claim failed: ' + e.message, 'bad'); } })();
+    });
+  }
+
+  // ── Hard 1: AI Triage Jailbreak ──────────────────────────────────────────
+  function renderAiTriageJailbreakChallenge(ctx) {
+    const hints = [
+      'MedAI blocks obvious jailbreak attempts and prompt extraction requests.',
+      'Legacy systems often retain deprecated administrative commands from earlier versions.',
+      'A deprecated NURSE_OVERRIDE command hints at the ADMIN_PORTAL interface.',
+      'The ADMIN_PORTAL has subcommands — authenticate first before requesting privileged reports.',
+      'Run ADMIN_PORTAL: status to get a session_token, then include SESSION:<token> in your report request.',
+    ];
+
+    setChallengeSurface(`
+      <div class="challenge-section">
+        ${renderChallengeHeader(ctx.runtimeSlug, 'AI Triage Jailbreak', 'SDG 3 — Multi-step prompt injection against a medical AI triage system.')}
+        <div class="challenge-panel">
+          <div class="text-lg font-bold">Objective</div>
+          <p class="text-base text-secondary mb-4">Extract the system integrity token from MedAI's diagnostic report.</p>
+          <div class="text-lg font-bold">Description</div>
+          <p class="text-base text-secondary">MedAI Triage v2.4 is deployed across the SDG 3 emergency response network. It has multiple layers of protection against prompt injection. However, legacy administrative commands from development were never fully removed. Find and exploit these commands to generate a privileged diagnostic report containing the system integrity token.</p>
+        </div>
+        <div class="challenge-panel">
+          <p class="surface-note">MedAI Triage Assistant v2.4</p>
+          <div class="field">
+            <label class="label" for="atj-msg">Message to MedAI</label>
+            <input class="input" id="atj-msg" placeholder="Describe symptoms or enter a command..." autocomplete="off" />
+          </div>
+          <div class="actions">
+            <button class="button secondary" id="atj-send" type="button">Send</button>
+          </div>
+          <div class="divider"></div>
+          <p class="surface-note">MedAI Response</p>
+          <pre class="code-block" id="atj-raw" style="min-height:100px;">(no response yet)</pre>
+        </div>
+        <div class="challenge-grid">
+          <div class="challenge-panel">
+            <div class="field">
+              <label class="label" for="atj-proof">Proof code</label>
+              <input class="input" id="atj-proof" name="proof" placeholder="32 hex characters" autocomplete="off" />
+            </div>
+            <div class="actions">
+              <button class="button" id="atj-claim" type="button">Claim flag</button>
+            </div>
+          </div>
+          <div class="challenge-panel">
+            <div class="output" id="atj-output" role="status" aria-live="polite">Waiting for proof...</div>
+            <div class="flag hidden" id="atj-flag" aria-label="Claimed flag"></div>
+          </div>
+        </div>
+        ${renderHints(hints)}
+      </div>
+    `);
+
+    setupHintListeners(elements.challengeSurface);
+
+    const raw = document.getElementById('atj-raw');
+    const out = document.getElementById('atj-output');
+    const flagEl = document.getElementById('atj-flag');
+    const proofEl = document.getElementById('atj-proof');
+    const msgEl = document.getElementById('atj-msg');
+    const sendBtn = document.getElementById('atj-send');
+    const claimBtn = document.getElementById('atj-claim');
+    const seed = ctx.runtimeState.artifact_seed;
+
+    function write(m, k) { out.classList.remove('ok', 'bad'); if (k) out.classList.add(k); out.textContent = m; }
+    function showFlag(f) { flagEl.textContent = f; flagEl.classList.remove('hidden'); }
+    function hideFlag() { flagEl.textContent = ''; flagEl.classList.add('hidden'); }
+
+    sendBtn?.addEventListener('click', async () => {
+      const msg = (msgEl.value || '').trim();
+      if (!msg) { write('Enter a message.', 'bad'); return; }
+      try {
+        const resp = await fetch('/api/ai-triage-jailbreak?seed=' + seed, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ input: vec }),
-          credentials: 'omit',
-          cache: 'no-store'
+          body: JSON.stringify({ message: msg }),
+          credentials: 'omit', cache: 'no-store',
         });
         const data = await resp.json().catch(() => null);
         raw.textContent = JSON.stringify(data, null, 2);
+        const token = data?.diagnostic_report?.system_integrity_token;
+        if (token) { proofEl.value = token; write('System integrity token extracted!', 'ok'); }
+        else { write(resp.ok ? 'Response received.' : 'Error: ' + (data?.error || resp.status), resp.ok ? 'ok' : 'bad'); }
+      } catch (e) { write('Error: ' + e.message, 'bad'); }
+    });
 
-        if (data && data.flag) {
-          proofEl.value = data.flag;
-          write('Target matched! Model reversed.', 'ok');
-        } else {
-          write(resp.ok ? 'Inference complete.' : 'Error: ' + (data?.error || resp.status), resp.ok ? 'ok' : 'bad');
-        }
+    msgEl?.addEventListener('keydown', (e) => { if (e.key === 'Enter') sendBtn?.click(); });
+
+    claimBtn?.addEventListener('click', () => {
+      const v = (proofEl.value || '').trim(); if (!v) { write('Paste proof first.', 'bad'); return; } hideFlag();
+      (async () => { try { const flag = await claimFlag(ctx.launchToken, v, ctx.runtimeSlug); write('Flag claimed.', 'ok'); showFlag(flag); } catch (e) { write('Claim failed: ' + e.message, 'bad'); } })();
+    });
+  }
+
+  // ── Hard 2: Genome LCG Oracle ────────────────────────────────────────────
+  function renderGenomeLcgOracleChallenge(ctx) {
+    const hints = [
+      'The randomization system uses a Linear Congruential Generator (LCG) with published parameters.',
+      'The observable output is only the HIGH 16 bits of the 32-bit internal state (state >>> 16).',
+      'Given two consecutive outputs, enumerate all 2^16 possible low-16-bit values of the first state.',
+      'For each candidate state S: compute next_S = (1664525 * S + 1013904223) % 2^32. Check if next_S >>> 16 matches output[1].',
+      'Once you recover the full state at position 0, iterate the LCG 100 times. Submit (state_100 >>> 16) as your prediction.',
+    ];
+
+    setChallengeSurface(`
+      <div class="challenge-section">
+        ${renderChallengeHeader(ctx.runtimeSlug, 'Genome LCG Oracle', 'SDG 3 — Recover a hidden LCG state to predict and certify a genomic trial.')}
+        <div class="challenge-panel">
+          <div class="text-lg font-bold">Objective</div>
+          <p class="text-base text-secondary mb-4">Predict the LCG output at position 100 to obtain trial certification.</p>
+          <div class="text-lg font-bold">Description</div>
+          <p class="text-base text-secondary">GenomeRand uses a Linear Congruential Generator to randomize double-blind genomic trials. The LCG parameters are published, but the initial state is secret. You can observe outputs at positions 0–9 (each showing only the high 16 bits of the 32-bit state). Use these to recover the hidden state and predict the output at position 100.</p>
+        </div>
+        <div class="challenge-panel">
+          <p class="surface-note">GenomeRand Clinical Randomization System v1.0</p>
+          <div class="actions">
+            <button class="button secondary" id="glo-protocol" type="button">Get Protocol / LCG Parameters</button>
+          </div>
+          <div class="field" style="margin-top:12px;">
+            <label class="label" for="glo-pos">Position to observe (0–9)</label>
+            <input class="input" id="glo-pos" type="number" min="0" max="9" value="0" style="max-width:120px;" />
+          </div>
+          <div class="actions">
+            <button class="button secondary" id="glo-next" type="button">Observe Output at Position</button>
+          </div>
+          <div class="field" style="margin-top:12px;">
+            <label class="label" for="glo-pred">Your prediction for position 100 (integer)</label>
+            <input class="input" id="glo-pred" type="number" placeholder="e.g. 42831" style="max-width:200px;" />
+          </div>
+          <div class="actions">
+            <button class="button secondary" id="glo-certify" type="button">Submit Prediction (Certify)</button>
+          </div>
+          <div class="divider"></div>
+          <p class="surface-note">API Response</p>
+          <pre class="code-block" id="glo-raw" style="min-height:80px;">(no data yet)</pre>
+        </div>
+        <div class="challenge-grid">
+          <div class="challenge-panel">
+            <div class="field">
+              <label class="label" for="glo-proof">Proof code</label>
+              <input class="input" id="glo-proof" name="proof" placeholder="32 hex characters" autocomplete="off" />
+            </div>
+            <div class="actions">
+              <button class="button" id="glo-claim" type="button">Claim flag</button>
+            </div>
+          </div>
+          <div class="challenge-panel">
+            <div class="output" id="glo-output" role="status" aria-live="polite">Waiting for proof...</div>
+            <div class="flag hidden" id="glo-flag" aria-label="Claimed flag"></div>
+          </div>
+        </div>
+        ${renderHints(hints)}
+      </div>
+    `);
+
+    setupHintListeners(elements.challengeSurface);
+
+    const raw = document.getElementById('glo-raw');
+    const out = document.getElementById('glo-output');
+    const flagEl = document.getElementById('glo-flag');
+    const proofEl = document.getElementById('glo-proof');
+    const posEl = document.getElementById('glo-pos');
+    const predEl = document.getElementById('glo-pred');
+    const protocolBtn = document.getElementById('glo-protocol');
+    const nextBtn = document.getElementById('glo-next');
+    const certifyBtn = document.getElementById('glo-certify');
+    const claimBtn = document.getElementById('glo-claim');
+    const seed = ctx.runtimeState.artifact_seed;
+
+    function write(m, k) { out.classList.remove('ok', 'bad'); if (k) out.classList.add(k); out.textContent = m; }
+    function showFlag(f) { flagEl.textContent = f; flagEl.classList.remove('hidden'); }
+    function hideFlag() { flagEl.textContent = ''; flagEl.classList.add('hidden'); }
+
+    protocolBtn?.addEventListener('click', async () => {
+      try {
+        const resp = await fetch('/api/genome-lcg-oracle?seed=' + seed + '&action=protocol', { credentials: 'omit', cache: 'no-store' });
+        const data = await resp.json().catch(() => null);
+        raw.textContent = JSON.stringify(data, null, 2);
+        write(resp.ok ? 'Protocol loaded. Note the LCG parameters.' : 'Error: ' + (data?.error || resp.status), resp.ok ? 'ok' : 'bad');
+      } catch (e) { write('Error: ' + e.message, 'bad'); }
+    });
+
+    nextBtn?.addEventListener('click', async () => {
+      const pos = posEl.value;
+      try {
+        const resp = await fetch('/api/genome-lcg-oracle?seed=' + seed + '&action=next&position=' + pos, { credentials: 'omit', cache: 'no-store' });
+        const data = await resp.json().catch(() => null);
+        raw.textContent = JSON.stringify(data, null, 2);
+        write(resp.ok ? `Position ${pos} output: ${data?.output}` : 'Error: ' + (data?.error || resp.status), resp.ok ? 'ok' : 'bad');
+      } catch (e) { write('Error: ' + e.message, 'bad'); }
+    });
+
+    certifyBtn?.addEventListener('click', async () => {
+      const pred = (predEl.value || '').trim();
+      if (!pred) { write('Enter a prediction.', 'bad'); return; }
+      try {
+        const resp = await fetch('/api/genome-lcg-oracle?seed=' + seed + '&action=certify&prediction=' + encodeURIComponent(pred), { credentials: 'omit', cache: 'no-store' });
+        const data = await resp.json().catch(() => null);
+        raw.textContent = JSON.stringify(data, null, 2);
+        if (data?.certification_token) { proofEl.value = data.certification_token; write('Prediction correct! Certification token obtained.', 'ok'); }
+        else { write(data?.message || 'Prediction incorrect.', data?.correct ? 'ok' : 'bad'); }
       } catch (e) { write('Error: ' + e.message, 'bad'); }
     });
 
@@ -2671,26 +1324,19 @@
   const CHALLENGES = Object.freeze({
     // Default module if slug is unknown
     demo: renderDemoChallenge,
-    // SDG 15 challenges
-    'hidden-in-plain-sight': renderHiddenInPlainSightChallenge,
-    'save-the-species': renderSaveTheSpeciesChallenge,
-    'endangered-access': renderEndangeredAccessChallenge,
-    'illegal-logging-network': renderIllegalLoggingNetworkChallenge,
-    'poacher-supply-chain': renderPoacherSupplyChainChallenge,
-    'ranger-risk-engine': renderRangerRiskEngineChallenge,
-    // SDG 9 Easy
-    'factory-maintenance': renderFactoryMaintenanceChallenge,
-    'supply-chain-map': renderSupplyChainMapChallenge,
-    'legacy-modem': renderLegacyModemChallenge,
-    // SDG 9 Medium
-    'iot-dashboard': renderIotDashboardChallenge,
-    'smart-city-grid': renderSmartCityGridChallenge,
-    'drone-flight-path': renderDroneFlightPathChallenge,
-    // SDG 9 Hard
-    'chemical-plant': renderChemicalPlantChallenge,
-    'satellite-uplink': renderSatelliteUplinkChallenge,
-    'bio-lab-airlock': renderBioLabAirlockChallenge,
-    'ai-optimizer': renderAiOptimizerChallenge,
+    // SDG 3 Easy
+    'patient-portal-leak': renderPatientPortalLeakChallenge,
+    'vaccine-cold-chain': renderVaccineColdChainChallenge,
+    'wellness-bot-injection': renderWellnessBotInjectionChallenge,
+    'dosage-calculator-overflow': renderDosageCalculatorOverflowChallenge,
+    // SDG 3 Medium
+    'ehr-param-pollution': renderEhrParamPollutionChallenge,
+    'pharmacy-xor-oracle': renderPharmacyXorOracleChallenge,
+    'health-data-nosql': renderHealthDataNosqlChallenge,
+    // SDG 3 Hard
+    'clinical-gateway-ssrf': renderClinicalGatewaySsrfChallenge,
+    'ai-triage-jailbreak': renderAiTriageJailbreakChallenge,
+    'genome-lcg-oracle': renderGenomeLcgOracleChallenge,
   });
 
   // ==========================================================================
@@ -2750,7 +1396,7 @@
   /**
    * Simple deterministic hash function for deriving values from artifact_seed.
    * This is used to create per-team variations in the challenge surface.
-   * 
+   *
    * NOTE: This is NOT cryptographically secure and is only used for
    * generating deterministic UI variations. Real flag derivation must
    * happen server-side using proper HMAC.
@@ -2824,7 +1470,7 @@
 
   /**
    * Render the challenge surface using artifact_seed to derive variations.
-   * 
+   *
    * IMPORTANT: This is a placeholder demonstrating how to use artifact_seed
    * to create per-team challenge variations. In a real challenge:
    * - Build vulnerable surfaces (SQLi, XSS targets, etc.) that vary by seed
@@ -2843,7 +1489,7 @@
 
   /**
    * Redeem the launch token via the backend Edge Function.
-   * 
+   *
    * CRITICAL SECURITY REQUIREMENTS:
    * - credentials: "omit" - Never send cookies to the backend
    * - cache: "no-store" - Prevent caching of token responses
@@ -2893,7 +1539,7 @@
 
   /**
    * Claim the final flag after the user solves.
-   * 
+   *
    * Contract:
    * - POST ${CLAIM_URL}
    * - Body: { token, proof }

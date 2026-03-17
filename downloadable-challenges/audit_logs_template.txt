@@ -1,0 +1,118 @@
+=================================================================
+SECURE AUDIT LOG EXPORT - ClinCore Health Systems v3.2
+Export Date: 2026-03-17  Period: 2026-03-15 to 2026-03-17
+Classification: CONFIDENTIAL - Internal Use Only
+Log Integrity: SHA-256 chain verified
+=================================================================
+
+-- SESSION AUDIT RECORDS --
+
+[2026-03-15 06:00:01] SYSTEM: Service started (PID: 14823)
+[2026-03-15 06:00:04] SYSTEM: Loading security policies [OK]
+[2026-03-15 06:00:07] SYSTEM: Connecting to audit relay [10.0.2.5:9200]
+[2026-03-15 06:00:09] SYSTEM: Relay connected [OK]
+[2026-03-15 06:01:22] CRON: Scheduled backup initialized
+[2026-03-15 06:01:25] CRON: Snapshot token: QMFYHA3BPJZWKYLOM5XGC3TPNRSWM===
+[2026-03-15 06:05:00] AUTH: TLS certificate renewed [CN=clincore.internal]
+[2026-03-15 07:43:11] AUTH: User login [alice.chen@clincore.internal] from 10.0.1.42
+[2026-03-15 07:43:11] AUTH: Session token assigned [sess:7a3f]
+[2026-03-15 07:43:15] ACCESS: alice.chen read /records/patient_007_2026.enc
+[2026-03-15 07:44:02] ACCESS: alice.chen read /records/patient_012_2026.enc
+[2026-03-15 07:44:45] ENCRYPT: EncryptedToken: ONSWG4TFORQXIIDBNZSCAZLPON2XGYLSMUQHG43JMRPWK3TFFQQCK2LFNYQQ====
+[2026-03-15 07:44:46] ACCESS: alice.chen write /reports/discharge_007.pdf
+[2026-03-15 07:51:30] ERROR: Disk write latency > 500ms on /var/data (retry 1/3)
+[2026-03-15 07:51:31] ERROR: Disk write latency > 500ms on /var/data (retry 2/3)
+[2026-03-15 07:51:33] WARN: TEMP_LOG_ENTRY buffered (queue depth: 3)
+[2026-03-15 07:51:35] SYSTEM: Write recovered [OK]
+[2026-03-15 08:12:07] AUTH: User login [bob.mirza@clincore.internal] from 10.0.1.88
+[2026-03-15 08:12:07] AUTH: Session token assigned [sess:2c91]
+[2026-03-15 08:12:21] ACCESS: bob.mirza read /config/alert_thresholds.json
+[2026-03-15 08:17:44] ACCESS: bob.mirza write /config/alert_thresholds.json
+[2026-03-15 08:17:44] AUDIT: Config change detected -- diff logged to /audit/cfg_diff_20260315.bin
+[2026-03-15 09:00:00] CRON: Hourly integrity check started
+[2026-03-15 09:00:03] CRON: Integrity check: 4821 records verified [OK]
+[2026-03-15 09:05:17] AUTH: User login [svc.dataexport@clincore.internal] from 10.0.3.10
+[2026-03-15 09:05:17] AUTH: Service account login [svc:dataexport]
+[2026-03-15 09:05:21] EXPORT: Batch export initiated [job_id: 8f2a1c]
+[2026-03-15 09:05:24] EXPORT: Records queued: 312
+[2026-03-15 09:05:44] ENCRYPT: EncryptedToken: NRQWKZLBNZXWY3LTNFSW45DFMVZWKZLSOR3WKIDPMQQHK3TLMRSA4TBGRSAX====
+[2026-03-15 09:05:45] EXPORT: Encryption pass complete
+[2026-03-15 09:06:12] EXPORT: Upload to secure relay [OK]
+[2026-03-15 09:06:13] AUTH: User logout [svc.dataexport@clincore.internal]
+[2026-03-15 10:30:00] SYSTEM: Certificate expiry check [OK]
+[2026-03-15 11:15:42] AUTH: Failed login attempt [unknown] from 203.0.113.45
+[2026-03-15 11:15:43] SECURITY: Brute-force detection: IP 203.0.113.45 flagged
+[2026-03-15 11:15:43] SECURITY: Temporary block applied [TTL: 900s]
+[2026-03-15 12:00:00] CRON: Hourly integrity check started
+[2026-03-15 12:00:04] CRON: Integrity check: 4835 records verified [OK]
+[2026-03-15 12:34:09] AUTH: User logout [alice.chen@clincore.internal] [duration: 290m 58s]
+[2026-03-15 12:34:09] AUDIT: Session summary logged [sess:7a3f]
+[2026-03-15 13:22:55] AUTH: User login [carol.osei@clincore.internal] from 10.0.1.15
+[2026-03-15 13:22:55] AUTH: Session token assigned [sess:5d04]
+[2026-03-15 13:23:10] ACCESS: carol.osei read /reports/discharge_007.pdf
+[2026-03-15 13:45:00] WARN: TEMP_LOG_ENTRY: high memory pressure (RSS: 89%)
+[2026-03-15 14:00:00] CRON: Hourly integrity check started
+[2026-03-15 14:00:03] CRON: Integrity check: 4838 records verified [OK]
+[2026-03-15 15:20:18] AUTH: User logout [carol.osei@clincore.internal] [duration: 117m 23s]
+[2026-03-15 16:00:01] CRON: Daily log rotation started
+[2026-03-15 16:00:03] CRON: Archived: audit_2026-03-14.log.gz [OK]
+[2026-03-15 16:00:04] SYSTEM: Rotating encryption keys...
+[2026-03-15 16:00:04] ENCRYPT: Key rotation token: ONSWG4TFORQXIIDBNZSCAZDPNR2WM===
+[2026-03-15 16:00:06] SYSTEM: Key rotation complete [OK]
+[2026-03-15 18:00:00] CRON: Hourly integrity check started
+[2026-03-15 18:00:03] CRON: Integrity check: 4838 records verified [OK]
+[2026-03-16 06:00:01] SYSTEM: Service heartbeat [uptime: 86400s]
+[2026-03-16 06:01:14] CRON: Scheduled backup initialized
+[2026-03-16 06:01:17] CRON: Snapshot token: PFZWK3LFNFXGO3TPNZQWY2LHNFSWY===
+[2026-03-16 08:09:33] AUTH: User login [alice.chen@clincore.internal] from 10.0.1.42
+[2026-03-16 08:09:33] AUTH: Session token assigned [sess:9b12]
+[2026-03-16 08:10:01] ACCESS: alice.chen read /records/patient_019_2026.enc
+[2026-03-16 08:10:44] ERROR: Disk write failed on /var/log (errno: 28 -- No space left on device)
+[2026-03-16 08:10:44] WARN: TEMP_LOG_ENTRY lost (1 entry dropped)
+[2026-03-16 08:10:46] SYSTEM: Emergency log flush to /var/log/overflow.tmp
+[2026-03-16 09:00:00] CRON: Hourly integrity check started
+[2026-03-16 09:00:04] CRON: Integrity check: 4840 records verified [OK]
+[2026-03-16 09:44:22] ENCRYPT: EncryptedToken: PFZWK3TFONRWGZLOMFQWC5LBNZ2WY4TFORXXIIDJNZSCA4DPOJSS2ZLFNRSA====
+[2026-03-16 09:44:23] AUDIT: Token logged for chain verification
+[2026-03-16 10:30:00] SYSTEM: Certificate expiry check [OK]
+[2026-03-16 11:22:17] AUTH: User logout [alice.chen@clincore.internal] [duration: 192m 44s]
+[2026-03-16 12:00:00] CRON: Hourly integrity check started
+[2026-03-16 12:00:03] CRON: Integrity check: 4843 records verified [OK]
+[2026-03-16 14:17:09] AUTH: User login [bob.mirza@clincore.internal] from 10.0.1.88
+[2026-03-16 14:17:09] AUTH: Session token assigned [sess:3e77]
+[2026-03-16 14:18:00] ACCESS: bob.mirza read /admin/system_config.json
+[2026-03-16 14:18:55] SECURITY: Privileged access logged [bob.mirza, /admin/system_config.json]
+[2026-03-16 15:05:43] AUTH: User logout [bob.mirza@clincore.internal] [duration: 48m 34s]
+[2026-03-16 16:00:01] CRON: Daily log rotation started
+[2026-03-16 16:00:03] CRON: Archived: audit_2026-03-15.log.gz [OK]
+[2026-03-16 16:00:04] SYSTEM: Rotating encryption keys...
+[2026-03-16 16:00:04] ENCRYPT: Key rotation token: NRQWKZLBNZXWY3LTNFSW45DFMFZWKZM=
+[2026-03-16 16:00:06] SYSTEM: Key rotation complete [OK]
+[2026-03-17 06:00:01] SYSTEM: Service heartbeat [uptime: 172800s]
+[2026-03-17 06:01:09] CRON: Scheduled backup initialized
+[2026-03-17 06:01:11] CRON: Snapshot token: MJQXG5LFNFXGO2TPNZQWY3LHNFSWY===
+[2026-03-17 08:30:44] AUTH: User login [carol.osei@clincore.internal] from 10.0.1.15
+[2026-03-17 08:30:44] AUTH: Session token assigned [sess:1f3a]
+[2026-03-17 08:31:00] ACCESS: carol.osei read /records/patient_003_2026.enc
+[2026-03-17 08:31:04] ACCESS: carol.osei read /records/patient_009_2026.enc
+[2026-03-17 09:00:00] CRON: Hourly integrity check started
+[2026-03-17 09:00:04] CRON: Integrity check: 4852 records verified [OK]
+[2026-03-17 09:17:34] ERROR: Disk write failed on /var/data (errno: 5 -- Input/output error)
+[2026-03-17 09:17:35] ERROR: Disk write failed on /var/data (retry 1/3)
+[2026-03-17 09:17:38] ERROR: Disk write failed on /var/data (retry 2/3)
+[2026-03-17 09:17:41] ERROR: Disk write failed on /var/data (retry 3/3 -- giving up)
+[2026-03-17 09:17:41] SYSTEM: Failover to secondary storage initiated
+[2026-03-17 09:17:43] SYSTEM: Failover complete [secondary: 10.0.5.20]
+[2026-03-17 09:23:17] ENCRYPT: EncryptedToken: {{FLAG_ENC}}
+[2026-03-17 09:23:18] AUDIT: Session checkpoint logged [sess:1f3a]
+[2026-03-17 10:15:22] AUTH: User logout [carol.osei@clincore.internal] [duration: 104m 38s]
+[2026-03-17 10:30:00] SYSTEM: Certificate expiry check [OK]
+[2026-03-17 11:00:00] CRON: Hourly integrity check started
+[2026-03-17 11:00:04] CRON: Integrity check: 4852 records verified [OK]
+
+=================================================================
+END OF LOG EXPORT
+Total records: 4852
+Export timestamp: 2026-03-17T11:00:04Z
+Export checksum: (integrity check pending -- contact sysadmin@clincore.internal)
+=================================================================
