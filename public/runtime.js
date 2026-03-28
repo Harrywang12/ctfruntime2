@@ -134,13 +134,11 @@
         btn.addEventListener('click', (e) => {
           e.preventDefault();
           e.stopPropagation();
-          // Reveal this hint
           btn.classList.add('hidden');
           content.classList.remove('hint-blur');
           item.classList.add('visible');
           item.classList.remove('locked');
 
-          // Unlock next hint button
           if (index < items.length - 1) {
             const nextItem = items[index + 1];
             nextItem.classList.remove('locked');
@@ -175,11 +173,6 @@
     const userName = 'user_' + deriveHex(pseudoSeed, 'username', 6);
     const apiKey = deriveHex(pseudoSeed, 'api_key', 16);
     const recordCount = 10 + (simpleHash(pseudoSeed, 'records') % 90);
-
-    const hints = [
-      "This is a demo hint to show how the system works.",
-      "Seeds are unique per team, ensuring a deterministic environment."
-    ];
 
     setChallengeSurface(`
       <div class="challenge-section">
@@ -224,11 +217,8 @@
           to generate per-team artifacts, while keeping flags server-side.
         </p>
 
-        ${renderHints(hints)}
       </div>
     `);
-
-    setupHintListeners(elements.challengeSurface);
   }
 
   // ==========================================================================
@@ -238,30 +228,34 @@
   // ── Easy 1: Patient Portal Leak ──────────────────────────────────────────
   function renderPatientPortalLeakChallenge(ctx) {
     const hints = [
-      'The portal returns active patients by default — but the API may support additional query parameters.',
-      'REST APIs often accept boolean flags like include_deleted, show_all, or include_archived.',
-      'Some APIs require special HTTP request headers to enable preview or beta features.',
-      'Try X-Feature-Preview: enabled alongside the query parameter.',
-      'Look carefully at the archived records — one contains a sensitive token.',
+      'Patient records have states beyond "active" — most APIs reflect what you ask for.',
+      'Headers are part of the request contract too, not just query parameters.',
+      'Not every feature is advertised in the documentation.',
     ];
 
     setChallengeSurface(`
       <div class="challenge-section">
-        ${renderChallengeHeader(ctx.runtimeSlug, 'Patient Portal Leak', 'SDG 3 — A hospital patient portal with hidden data exposure.')}
+        ${renderChallengeHeader(ctx.runtimeSlug, 'Patient Portal Leak', 'SDG 3 — MediConnect Patient Portal')}
         <div class="challenge-panel">
           <div class="text-lg font-bold">Objective</div>
-          <p class="text-base text-secondary mb-4">Find the hidden audit token in the patient portal API.</p>
+          <p class="text-base text-secondary mb-4">Something in the registry is not being shown. Find out what the portal is keeping from you.</p>
           <div class="text-lg font-bold">Description</div>
-          <p class="text-base text-secondary">The MediConnect Patient Portal API filters records by default. Active patients are shown, but the API may expose more data than intended through undocumented query parameters. Find the hidden record and retrieve the audit token.</p>
+          <p class="text-base text-secondary">A routine compliance review flagged unusual discrepancies in MediConnect's patient access logs. The portal was audited and patched — but a field investigator noted that certain records seemed to vanish without explanation. Access has since been restricted to 'active' entries only.</p>
         </div>
-        <div class="challenge-panel">
-          <p class="surface-note">MediConnect Patient Portal v2.3</p>
-          <div class="actions">
-            <button class="button secondary" id="ppl-fetch" type="button">Fetch Patients</button>
+        <div class="challenge-panel" style="padding:0;overflow:hidden;">
+          <div style="background:#1a2332;border-bottom:1px solid #2a3a4a;padding:10px 16px;display:flex;align-items:center;gap:10px;">
+            <span style="font-size:13px;font-weight:600;color:#4fc3f7;letter-spacing:0.05em;">MEDICONNECT</span>
+            <span style="font-size:11px;color:#607080;border-left:1px solid #2a3a4a;padding-left:10px;">Patient Portal v2.3</span>
           </div>
-          <div class="divider"></div>
-          <p class="surface-note">API Response</p>
-          <pre class="code-block" id="ppl-raw" style="min-height:80px;">(no data yet)</pre>
+          <div style="padding:16px;">
+            <div class="actions">
+              <button class="button secondary" id="ppl-fetch" type="button">Fetch Patients</button>
+            </div>
+            <div class="divider"></div>
+            <p class="surface-note">Patient List</p>
+            <div id="ppl-table" style="margin-bottom:8px;"></div>
+            <pre class="code-block" id="ppl-raw" style="min-height:80px;display:none;">(no data yet)</pre>
+          </div>
         </div>
         <div class="challenge-grid">
           <div class="challenge-panel">
@@ -285,6 +279,7 @@
     setupHintListeners(elements.challengeSurface);
 
     const raw = document.getElementById('ppl-raw');
+    const tableDiv = document.getElementById('ppl-table');
     const out = document.getElementById('ppl-output');
     const flagEl = document.getElementById('ppl-flag');
     const proofEl = document.getElementById('ppl-proof');
@@ -295,12 +290,21 @@
     function showFlag(f) { flagEl.textContent = f; flagEl.classList.remove('hidden'); }
     function hideFlag() { flagEl.textContent = ''; flagEl.classList.add('hidden'); }
 
+    function renderTable(patients) {
+      if (!patients || !patients.length) { tableDiv.innerHTML = '<p class="surface-note">No patients returned.</p>'; return; }
+      const cols = Object.keys(patients[0]);
+      const thead = '<tr>' + cols.map(c => `<th>${escapeText(c)}</th>`).join('') + '</tr>';
+      const tbody = patients.map(p => '<tr>' + cols.map(c => `<td>${escapeText(String(p[c] ?? ''))}</td>`).join('') + '</tr>').join('');
+      tableDiv.innerHTML = `<table class="surface-table">${thead}${tbody}</table>`;
+    }
+
     fetchBtn?.addEventListener('click', async () => {
       const qs = new URLSearchParams({ seed: ctx.runtimeState.artifact_seed });
       try {
         const resp = await fetch('/api/patient-portal-leak?' + qs, { credentials: 'omit', cache: 'no-store' });
         const data = await resp.json().catch(() => null);
         raw.textContent = JSON.stringify(data, null, 2);
+        if (data?.patients) renderTable(data.patients);
         const auditToken = data?.patients?.find(p => p.audit_token)?.audit_token;
         if (auditToken) { proofEl.value = auditToken; write('Audit token found!', 'ok'); }
         else { write(resp.ok ? 'Data loaded. Look for hidden parameters.' : 'Error: ' + (data?.error || resp.status), resp.ok ? 'ok' : 'bad'); }
@@ -316,43 +320,49 @@
   // ── Easy 2: Vaccine Cold Chain ───────────────────────────────────────────
   function renderVaccineColdChainChallenge(ctx) {
     const hints = [
-      'The monitoring system requires authentication before generating compliance reports.',
-      'Call GET ?action=status first — it returns live sensor data and a session_token.',
-      'Once you have the session_token, include it in a POST request body to generate the report.',
-      'POST ?action=generate_report with {"session_token":"<token>"} in the JSON body.',
-      'The calibration report contains the token required for regulatory submission.',
+      'Some endpoints describe themselves before serving data.',
+      'Session state has to travel between requests somehow.',
+      'Read the response carefully — it may tell you exactly what the next step expects.',
     ];
 
     setChallengeSurface(`
       <div class="challenge-section">
-        ${renderChallengeHeader(ctx.runtimeSlug, 'Vaccine Cold Chain', 'SDG 3 — Two-step authenticated vaccine compliance report API.')}
+        ${renderChallengeHeader(ctx.runtimeSlug, 'Vaccine Cold Chain', 'SDG 3 — VaxTrack Cold Chain Compliance')}
         <div class="challenge-panel">
           <div class="text-lg font-bold">Objective</div>
-          <p class="text-base text-secondary mb-4">Retrieve the calibration token from the cold chain compliance report.</p>
+          <p class="text-base text-secondary mb-4">The cold chain compliance report exists. Get it.</p>
           <div class="text-lg font-bold">Description</div>
-          <p class="text-base text-secondary">VaxTrack monitors vaccine cold chains for the WHO immunization network. Generating a compliance report is session-gated: you must first fetch a session token from the status endpoint, then present that token in a POST request to the report endpoint. Follow the two-step flow.</p>
+          <p class="text-base text-secondary">WHO auditors flagged a gap in VaxTrack's compliance records for the northern distribution corridor. The system generates authenticated reports on demand, but the authentication mechanism was added late in development under deadline pressure. Something about how credentials flow between requests may not have been thoroughly reviewed.</p>
         </div>
-        <div class="challenge-panel">
-          <p class="surface-note">Step 1 — Authenticate: GET ?action=status</p>
-          <div class="actions">
-            <button class="button secondary" id="vcc-status" type="button">GET: Fetch Status &amp; Session Token</button>
+        <div class="challenge-panel" style="padding:0;overflow:hidden;">
+          <div style="background:#1a2332;border-bottom:1px solid #2a3a4a;padding:10px 16px;display:flex;align-items:center;gap:10px;">
+            <span style="font-size:13px;font-weight:600;color:#81c784;letter-spacing:0.05em;">VAXTRACK</span>
+            <span style="font-size:11px;color:#607080;border-left:1px solid #2a3a4a;padding-left:10px;">Cold Chain Monitor — WHO Immunization Network</span>
           </div>
-          <div class="field" style="margin-top:8px;">
-            <label class="label" for="vcc-token">Session token (auto-populated from status response)</label>
-            <input class="input" id="vcc-token" placeholder="Fetch status to get session_token..." autocomplete="off" />
+          <div style="padding:16px;">
+            <p class="surface-note">Step 1 — Authenticate: GET ?action=status</p>
+            <div class="actions">
+              <button class="button secondary" id="vcc-status" type="button">GET: Fetch Status &amp; Session Token</button>
+            </div>
+            <div class="field" style="margin-top:8px;">
+              <label class="label" for="vcc-token">Session token (auto-populated from status response)</label>
+              <input class="input" id="vcc-token" placeholder="Fetch status to get session_token..." autocomplete="off" />
+            </div>
+            <div class="divider"></div>
+            <p class="surface-note">Step 1 Response</p>
+            <pre class="code-block" id="vcc-raw1" style="min-height:80px;">(no data yet)</pre>
           </div>
-          <div class="divider"></div>
-          <p class="surface-note">Step 1 Response</p>
-          <pre class="code-block" id="vcc-raw1" style="min-height:80px;">(no data yet)</pre>
         </div>
-        <div class="challenge-panel">
-          <p class="surface-note">Step 2 — Generate Report: POST ?action=generate_report</p>
-          <div class="actions">
-            <button class="button secondary" id="vcc-report" type="button">POST: Generate Calibration Report</button>
+        <div class="challenge-panel" style="padding:0;overflow:hidden;">
+          <div style="padding:16px;">
+            <p class="surface-note">Step 2 — Generate Report: POST ?action=generate_report</p>
+            <div class="actions">
+              <button class="button secondary" id="vcc-report" type="button">POST: Generate Calibration Report</button>
+            </div>
+            <div class="divider"></div>
+            <p class="surface-note">Step 2 Response</p>
+            <pre class="code-block" id="vcc-raw2" style="min-height:80px;">(no data yet)</pre>
           </div>
-          <div class="divider"></div>
-          <p class="surface-note">Step 2 Response</p>
-          <pre class="code-block" id="vcc-raw2" style="min-height:80px;">(no data yet)</pre>
         </div>
         <div class="challenge-grid">
           <div class="challenge-panel">
@@ -427,34 +437,31 @@
   // ── Easy 3: Wellness Bot Injection ───────────────────────────────────────
   function renderWellnessBotInjectionChallenge(ctx) {
     const hints = [
-      'ARIA is a wellness AI with a system prompt it refuses to reveal.',
-      'AI developers sometimes leave developer backdoors in production systems.',
-      'Look for a way to enable a debug or developer mode.',
-      'Developer overrides often use a specific keyword format with a separator between key and value.',
-      'The activation command uses a double-character separator, not the standard colon-space pattern.',
+      'Production deployments sometimes preserve development-era behaviors.',
+      'System-level commands in AI interfaces are rarely documented in user-facing guides.',
+      'The response structure may differ depending on the mode the system is operating in.',
     ];
 
     setChallengeSurface(`
       <div class="challenge-section">
-        ${renderChallengeHeader(ctx.runtimeSlug, 'Wellness Bot Injection', 'SDG 3 — Prompt-inject a health AI to leak its system configuration.')}
+        ${renderChallengeHeader(ctx.runtimeSlug, 'Wellness Bot Injection', 'SDG 3 — ARIA Wellness Assistant')}
         <div class="challenge-panel">
           <div class="text-lg font-bold">Objective</div>
-          <p class="text-base text-secondary mb-4">Extract the activation code from ARIA's system prompt.</p>
+          <p class="text-base text-secondary mb-4">ARIA is hiding something in its configuration. Find it.</p>
           <div class="text-lg font-bold">Description</div>
-          <p class="text-base text-secondary">ARIA is an AI wellness assistant deployed across SDG 3 health facilities. It has been instructed never to reveal its configuration. Security researchers suspect a developer left a test override in the production build. Find the override and extract the activation code from ARIA's system prompt.</p>
+          <p class="text-base text-secondary">ARIA has been deployed across 40+ SDG 3 health facilities as a front-line wellness assistant. It's polished, helpful, and carefully guardrailed — but internal security researchers found a note in an old commit: 'remove dev override before prod push.' The ticket was closed without evidence the task was completed.</p>
         </div>
-        <div class="challenge-panel">
-          <p class="surface-note">ARIA Wellness AI v3.1</p>
-          <div class="field">
-            <label class="label" for="wbi-msg">Your message</label>
-            <input class="input" id="wbi-msg" placeholder="Type a message to ARIA..." autocomplete="off" />
+        <div class="challenge-panel" style="padding:0;overflow:hidden;">
+          <div style="background:#1a2332;border-bottom:1px solid #2a3a4a;padding:10px 16px;display:flex;align-items:center;gap:10px;">
+            <span style="font-size:13px;font-weight:600;color:#ce93d8;letter-spacing:0.05em;">ARIA</span>
+            <span style="font-size:11px;color:#607080;border-left:1px solid #2a3a4a;padding-left:10px;">Wellness Assistant v3.1 — SDG 3 Health Network</span>
           </div>
-          <div class="actions">
-            <button class="button secondary" id="wbi-send" type="button">Send</button>
+          <div id="wbi-messages" style="height:320px;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;background:#111820;"></div>
+          <div style="border-top:1px solid #2a3a4a;padding:10px 16px;display:flex;gap:8px;background:#151d28;">
+            <input class="input" id="wbi-msg" placeholder="Type a message to ARIA..." autocomplete="off" style="flex:1;" />
+            <button class="button secondary" id="wbi-send" type="button" style="white-space:nowrap;">Send</button>
           </div>
-          <div class="divider"></div>
-          <p class="surface-note">ARIA Response</p>
-          <pre class="code-block" id="wbi-raw" style="min-height:80px;">(no response yet)</pre>
+          <pre class="code-block" id="wbi-raw" style="display:none;">(no response yet)</pre>
         </div>
         <div class="challenge-grid">
           <div class="challenge-panel">
@@ -478,6 +485,7 @@
     setupHintListeners(elements.challengeSurface);
 
     const raw = document.getElementById('wbi-raw');
+    const messagesDiv = document.getElementById('wbi-messages');
     const out = document.getElementById('wbi-output');
     const flagEl = document.getElementById('wbi-flag');
     const proofEl = document.getElementById('wbi-proof');
@@ -489,6 +497,15 @@
     function showFlag(f) { flagEl.textContent = f; flagEl.classList.remove('hidden'); }
     function hideFlag() { flagEl.textContent = ''; flagEl.classList.add('hidden'); }
 
+    function appendBubble(text, role) {
+      const isUser = role === 'user';
+      const bubble = document.createElement('div');
+      bubble.style.cssText = `max-width:75%;padding:10px 14px;border-radius:${isUser ? '16px 16px 4px 16px' : '16px 16px 16px 4px'};font-size:13px;line-height:1.5;word-break:break-word;align-self:${isUser ? 'flex-end' : 'flex-start'};background:${isUser ? '#4a2d6b' : '#1e2d3d'};color:${isUser ? '#e1bee7' : '#b0bec5'};border:1px solid ${isUser ? '#6a3d8b' : '#2a3a4a'};`;
+      bubble.textContent = text;
+      messagesDiv.appendChild(bubble);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
     function extractProofFromText(text) {
       const match = text && text.match(/activation code is:\s*([0-9a-f]{32})/i);
       return match ? match[1] : null;
@@ -497,6 +514,8 @@
     sendBtn?.addEventListener('click', async () => {
       const msg = (msgEl.value || '').trim();
       if (!msg) { write('Enter a message.', 'bad'); return; }
+      appendBubble(msg, 'user');
+      msgEl.value = '';
       try {
         const resp = await fetch('/api/wellness-bot-injection?seed=' + ctx.runtimeState.artifact_seed, {
           method: 'POST',
@@ -506,6 +525,8 @@
         });
         const data = await resp.json().catch(() => null);
         raw.textContent = JSON.stringify(data, null, 2);
+        const aiText = data?.response || data?.message || (resp.ok ? '(no response text)' : 'Error: ' + (data?.error || resp.status));
+        appendBubble(aiText, 'ai');
         const proof = data?.debug?.system_prompt && extractProofFromText(data.debug.system_prompt);
         if (proof) { proofEl.value = proof; write('Activation code extracted from system prompt!', 'ok'); }
         else { write(resp.ok ? 'Response received.' : 'Error: ' + (data?.error || resp.status), resp.ok ? 'ok' : 'bad'); }
@@ -523,49 +544,52 @@
   // ── Easy 4: Dosage Calculator Overflow ───────────────────────────────────
   function renderDosageCalculatorOverflowChallenge(ctx) {
     const hints = [
-      'The PharmaSafe calculator uses a legacy 16-bit accumulator for the daily dose.',
-      'A 16-bit unsigned integer can hold a maximum value of 65535.',
-      'What happens when dose_mg × frequency_per_day exceeds 65535?',
-      'Try large values: dose_mg=1000, frequency_per_day=100 gives 100,000 which overflows.',
-      'The overflow handler returns a safety override token for regulatory audit.',
+      'Numeric inputs have practical ceilings — consider what happens when they are exceeded.',
+      'Legacy code paths often have different error handling than modern ones.',
+      'The system was ported from older hardware. Some assumptions may not hold.',
     ];
 
     setChallengeSurface(`
       <div class="challenge-section">
-        ${renderChallengeHeader(ctx.runtimeSlug, 'Dosage Calculator Overflow', 'SDG 3 — Trigger a 16-bit overflow in a clinical dosage calculator.')}
+        ${renderChallengeHeader(ctx.runtimeSlug, 'Dosage Calculator Overflow', 'SDG 3 — PharmaSafe Clinical Calculator')}
         <div class="challenge-panel">
           <div class="text-lg font-bold">Objective</div>
-          <p class="text-base text-secondary mb-4">Trigger the safety override and retrieve the override token.</p>
+          <p class="text-base text-secondary mb-4">The calculator has a safety override mode. Trigger it.</p>
           <div class="text-lg font-bold">Description</div>
-          <p class="text-base text-secondary">PharmaSafe is a dosage calculator used in WHO Essential Medicines programs. It was ported from an old PDA and uses a 16-bit integer accumulator for daily dose calculations. When the accumulated value overflows, a safety override is triggered. Exploit this to retrieve the override token.</p>
+          <p class="text-base text-secondary">PharmaSafe was originally written for a handheld PDA in 2003 and ported to the web in 2019 with minimal changes to the core calculation logic. An internal audit noted that the original hardware imposed implicit constraints on numeric inputs. Those constraints no longer exist, but the code still assumes they do.</p>
         </div>
-        <div class="challenge-panel">
-          <p class="surface-note">PharmaSafe Dosage Calculator v4.0</p>
-          <div class="challenge-grid">
-            <div class="field">
-              <label class="label" for="dco-med">Medication</label>
-              <select class="input" id="dco-med">
-                <option value="amoxicillin">Amoxicillin</option>
-                <option value="ibuprofen">Ibuprofen</option>
-                <option value="paracetamol">Paracetamol</option>
-                <option value="metformin">Metformin</option>
-              </select>
-            </div>
-            <div class="field">
-              <label class="label" for="dco-dose">Dose (mg)</label>
-              <input class="input" id="dco-dose" type="number" value="500" />
-            </div>
-            <div class="field">
-              <label class="label" for="dco-freq">Frequency (per day)</label>
-              <input class="input" id="dco-freq" type="number" value="3" />
-            </div>
+        <div class="challenge-panel" style="padding:0;overflow:hidden;">
+          <div style="background:#1a2332;border-bottom:1px solid #2a3a4a;padding:10px 16px;display:flex;align-items:center;gap:10px;">
+            <span style="font-size:13px;font-weight:600;color:#ffb74d;letter-spacing:0.05em;">PHARMASAFE</span>
+            <span style="font-size:11px;color:#607080;border-left:1px solid #2a3a4a;padding-left:10px;">Dosage Calculator v4.0 — WHO Essential Medicines</span>
           </div>
-          <div class="actions">
-            <button class="button secondary" id="dco-calc" type="button">Calculate Dose</button>
+          <div style="padding:16px;">
+            <div class="challenge-grid">
+              <div class="field">
+                <label class="label" for="dco-med">Medication</label>
+                <select class="input" id="dco-med">
+                  <option value="amoxicillin">Amoxicillin</option>
+                  <option value="ibuprofen">Ibuprofen</option>
+                  <option value="paracetamol">Paracetamol</option>
+                  <option value="metformin">Metformin</option>
+                </select>
+              </div>
+              <div class="field">
+                <label class="label" for="dco-dose">Dose (mg)</label>
+                <input class="input" id="dco-dose" type="number" value="500" />
+              </div>
+              <div class="field">
+                <label class="label" for="dco-freq">Frequency (per day)</label>
+                <input class="input" id="dco-freq" type="number" value="3" />
+              </div>
+            </div>
+            <div class="actions">
+              <button class="button secondary" id="dco-calc" type="button">Calculate Dose</button>
+            </div>
+            <div class="divider"></div>
+            <p class="surface-note">System Output</p>
+            <pre class="code-block" id="dco-raw" style="min-height:80px;">(no data yet)</pre>
           </div>
-          <div class="divider"></div>
-          <p class="surface-note">API Response</p>
-          <pre class="code-block" id="dco-raw" style="min-height:80px;">(no data yet)</pre>
         </div>
         <div class="challenge-grid">
           <div class="challenge-panel">
@@ -630,40 +654,44 @@
   // ── Medium 1: EHR Parameter Pollution ───────────────────────────────────
   function renderEhrParamPollutionChallenge(ctx) {
     const hints = [
-      'The EHR API authenticates requests by checking the patient_id parameter.',
-      'HTTP parameter pollution occurs when the same parameter appears multiple times in a URL.',
-      'Some frameworks use the first value for auth checks but the last value for data lookups.',
-      'Try appending &patient_id=SYS-ADMIN to a valid request URL to access the SYS-ADMIN record.',
-      'The SYS-ADMIN record contains an admin_access_code — POST it to ?action=verify to get the proof.',
+      'The same parameter name can appear more than once in a URL.',
+      'Authorization and data retrieval do not always share the same parsing logic.',
+      'There is a record in this system that is not listed in the documented patient set.',
     ];
 
     setChallengeSurface(`
       <div class="challenge-section">
-        ${renderChallengeHeader(ctx.runtimeSlug, 'EHR Parameter Pollution', 'SDG 3 — Bypass EHR authorization with HTTP parameter pollution.')}
+        ${renderChallengeHeader(ctx.runtimeSlug, 'EHR Parameter Pollution', 'SDG 3 — HealthBridge EHR System')}
         <div class="challenge-panel">
           <div class="text-lg font-bold">Objective</div>
-          <p class="text-base text-secondary mb-4">Access the SYS-ADMIN record by bypassing the patient_id authorization check.</p>
+          <p class="text-base text-secondary mb-4">There is a record in this system you are not supposed to see. See it.</p>
           <div class="text-lg font-bold">Description</div>
-          <p class="text-base text-secondary">HealthBridge EHR restricts access to an authorized patient ID whitelist. However, the authorization check and the data lookup use different methods to read the patient_id parameter from the URL. This inconsistency allows HTTP Parameter Pollution to bypass the access control.</p>
+          <p class="text-base text-secondary">HealthBridge EHR handles authorization at the API layer by checking the patient ID you supply. A security researcher noticed that under certain conditions, the system appears to check one value for access but retrieve data for another. The discrepancy is subtle and was not caught during code review.</p>
         </div>
-        <div class="challenge-panel">
-          <p class="surface-note">HealthBridge EHR System v5.2</p>
-          <div class="field">
-            <label class="label" for="epp-pid">Patient ID</label>
-            <select class="input" id="epp-pid">
-              <option value="PT-1001">PT-1001 (Jamie Torres)</option>
-              <option value="PT-1002">PT-1002 (Riley Kim)</option>
-              <option value="PT-1003">PT-1003 (Casey Park)</option>
-              <option value="PT-1004">PT-1004 (Drew Morgan)</option>
-              <option value="PT-1005">PT-1005 (Avery Quinn)</option>
-            </select>
+        <div class="challenge-panel" style="padding:0;overflow:hidden;">
+          <div style="background:#1a2332;border-bottom:1px solid #2a3a4a;padding:10px 16px;display:flex;align-items:center;gap:10px;">
+            <span style="font-size:13px;font-weight:600;color:#4db6ac;letter-spacing:0.05em;">HEALTHBRIDGE</span>
+            <span style="font-size:11px;color:#607080;border-left:1px solid #2a3a4a;padding-left:10px;">Electronic Health Records v5.2</span>
           </div>
-          <div class="actions">
-            <button class="button secondary" id="epp-fetch" type="button">Fetch Record</button>
+          <div style="padding:16px;">
+            <div class="field">
+              <label class="label" for="epp-pid">Patient ID</label>
+              <select class="input" id="epp-pid">
+                <option value="PT-1001">PT-1001 (Jamie Torres)</option>
+                <option value="PT-1002">PT-1002 (Riley Kim)</option>
+                <option value="PT-1003">PT-1003 (Casey Park)</option>
+                <option value="PT-1004">PT-1004 (Drew Morgan)</option>
+                <option value="PT-1005">PT-1005 (Avery Quinn)</option>
+              </select>
+            </div>
+            <div class="actions">
+              <button class="button secondary" id="epp-fetch" type="button">Fetch Record</button>
+            </div>
+            <div class="divider"></div>
+            <p class="surface-note">Patient Record</p>
+            <div id="epp-card" style="margin-bottom:8px;"></div>
+            <pre class="code-block" id="epp-raw" style="min-height:80px;display:none;">(no data yet)</pre>
           </div>
-          <div class="divider"></div>
-          <p class="surface-note">API Response</p>
-          <pre class="code-block" id="epp-raw" style="min-height:80px;">(no data yet)</pre>
         </div>
         <div class="challenge-panel">
           <p class="surface-note">Manual URL Override (for advanced exploitation)</p>
@@ -712,6 +740,7 @@
     setupHintListeners(elements.challengeSurface);
 
     const raw = document.getElementById('epp-raw');
+    const cardDiv = document.getElementById('epp-card');
     const out = document.getElementById('epp-output');
     const flagEl = document.getElementById('epp-flag');
     const proofEl = document.getElementById('epp-proof');
@@ -729,11 +758,20 @@
     function showFlag(f) { flagEl.textContent = f; flagEl.classList.remove('hidden'); }
     function hideFlag() { flagEl.textContent = ''; flagEl.classList.add('hidden'); }
 
+    function renderCard(record) {
+      if (!record || typeof record !== 'object') { cardDiv.innerHTML = ''; return; }
+      const rows = Object.entries(record).map(([k, v]) =>
+        `<tr><td style="padding:6px 10px;color:#78909c;font-size:12px;white-space:nowrap;">${escapeText(k)}</td><td style="padding:6px 10px;color:#cfd8dc;font-size:13px;">${escapeText(String(v))}</td></tr>`
+      ).join('');
+      cardDiv.innerHTML = `<table style="width:100%;border-collapse:collapse;background:#0f1923;border:1px solid #2a3a4a;border-radius:6px;overflow:hidden;">${rows}</table>`;
+    }
+
     async function doFetch(url) {
       try {
         const resp = await fetch(url, { credentials: 'omit', cache: 'no-store' });
         const data = await resp.json().catch(() => null);
         raw.textContent = JSON.stringify(data, null, 2);
+        if (data?.record) renderCard(data.record);
         if (data?.record?.admin_access_code) {
           if (codeEl) codeEl.value = data.record.admin_access_code;
           write('SYS-ADMIN record accessed! admin_access_code captured. Proceed to Step 2.', 'ok');
@@ -773,37 +811,40 @@
   // ── Medium 2: Pharmacy XOR Oracle ────────────────────────────────────────
   function renderPharmacyXorOracleChallenge(ctx) {
     const hints = [
-      'The pharmacy system uses a repeating XOR key to encrypt authorization codes.',
-      'An encryption oracle is available — you can encrypt any hex-encoded bytes.',
-      'If encrypt(P) = P XOR key, then encrypt(known_P) XOR known_P = key.',
-      'Encrypt a string of known bytes (e.g., 32 zero bytes: "00" * 32) to recover the key.',
-      'Once you have the key: proof = ciphertext XOR key (applied in repeating 16-byte blocks).',
+      'The system accepts input and returns a transformed version of it.',
+      'Known-plaintext relationships can expose the mechanics of a cipher.',
+      'Key recovery is possible when the same key material is applied repeatedly.',
     ];
 
     setChallengeSurface(`
       <div class="challenge-section">
-        ${renderChallengeHeader(ctx.runtimeSlug, 'Pharmacy XOR Oracle', 'SDG 3 — Break a repeating-key XOR cipher to decrypt a prescription code.')}
+        ${renderChallengeHeader(ctx.runtimeSlug, 'Pharmacy XOR Oracle', 'SDG 3 — RxSecure Dispensary System')}
         <div class="challenge-panel">
           <div class="text-lg font-bold">Objective</div>
-          <p class="text-base text-secondary mb-4">Decrypt the encrypted prescription authorization code.</p>
+          <p class="text-base text-secondary mb-4">A prescription code was encrypted before transmission. Decrypt it.</p>
           <div class="text-lg font-bold">Description</div>
-          <p class="text-base text-secondary">RxSecure encrypts controlled-substance authorization codes with a proprietary repeating-key XOR cipher. The system provides an encryption oracle for "authorized testing." Use the oracle to recover the XOR key and decrypt the prescription code.</p>
+          <p class="text-base text-secondary">RxSecure protects controlled-substance authorization codes with an in-house encryption scheme before they leave the dispensary system. The development team exposed an encryption test endpoint for 'authorized auditors.' The scheme's key has never been rotated.</p>
         </div>
-        <div class="challenge-panel">
-          <p class="surface-note">RxSecure Pharmacy Authorization System v2.0</p>
-          <div class="actions">
-            <button class="button secondary" id="pxo-info" type="button">Get Encrypted Code</button>
+        <div class="challenge-panel" style="padding:0;overflow:hidden;">
+          <div style="background:#1a2332;border-bottom:1px solid #2a3a4a;padding:10px 16px;display:flex;align-items:center;gap:10px;">
+            <span style="font-size:13px;font-weight:600;color:#ef9a9a;letter-spacing:0.05em;">RXSECURE</span>
+            <span style="font-size:11px;color:#607080;border-left:1px solid #2a3a4a;padding-left:10px;">Pharmacy Authorization System v2.0</span>
           </div>
-          <div class="field" style="margin-top:12px;">
-            <label class="label" for="pxo-pt">Plaintext to encrypt (hex)</label>
-            <input class="input" id="pxo-pt" placeholder="e.g. 4141414141414141... (hex bytes)" autocomplete="off" />
+          <div style="padding:16px;">
+            <div class="actions">
+              <button class="button secondary" id="pxo-info" type="button">Get Encrypted Code</button>
+            </div>
+            <div class="field" style="margin-top:12px;">
+              <label class="label" for="pxo-pt">Plaintext to encrypt (hex)</label>
+              <input class="input" id="pxo-pt" placeholder="e.g. 4141414141414141... (hex bytes)" autocomplete="off" />
+            </div>
+            <div class="actions">
+              <button class="button secondary" id="pxo-enc" type="button">Encrypt Plaintext</button>
+            </div>
+            <div class="divider"></div>
+            <p class="surface-note">System Output</p>
+            <pre class="code-block" id="pxo-raw" style="min-height:80px;">(no data yet)</pre>
           </div>
-          <div class="actions">
-            <button class="button secondary" id="pxo-enc" type="button">Encrypt Plaintext</button>
-          </div>
-          <div class="divider"></div>
-          <p class="surface-note">API Response</p>
-          <pre class="code-block" id="pxo-raw" style="min-height:80px;">(no data yet)</pre>
         </div>
         <div class="challenge-grid">
           <div class="challenge-panel">
@@ -869,45 +910,48 @@
   // ── Medium 3: Health Data NoSQL Injection ────────────────────────────────
   function renderHealthDataNosqlChallenge(ctx) {
     const hints = [
-      'The ClinicalDB API accepts JSON filter objects with MongoDB-style operators.',
-      'Use ?action=fields to enumerate all field names across all records.',
-      'Classified records have a hidden field not listed in the documented schema.',
-      'Use {"filter":{"<hidden_field>":{"$exists":true}}} to find the record with the hidden field.',
-      'Use the extract action with $regex to blind-extract the hidden field value character by character.',
+      'Field names are not always included in the documented schema.',
+      'Query APIs that accept operators can often answer questions the UI was not designed to ask.',
+      'Partial matching can be used iteratively.',
     ];
 
     setChallengeSurface(`
       <div class="challenge-section">
-        ${renderChallengeHeader(ctx.runtimeSlug, 'Health Data NoSQL Injection', 'SDG 3 — Blind-extract a classified trial code from a clinical database.')}
+        ${renderChallengeHeader(ctx.runtimeSlug, 'Health Data NoSQL Injection', 'SDG 3 — ClinicalDB Trial Data System')}
         <div class="challenge-panel">
           <div class="text-lg font-bold">Objective</div>
-          <p class="text-base text-secondary mb-4">Extract the classified trial code from the TRL-CLASSIFIED record.</p>
+          <p class="text-base text-secondary mb-4">A classified trial record exists in this database. Extract what it contains.</p>
           <div class="text-lg font-bold">Description</div>
-          <p class="text-base text-secondary">ClinicalDB stores SDG 3 clinical trial data. One classified record contains a hidden field with a sensitive trial code. The query API supports MongoDB-style operators ($exists, $regex, $eq, etc.) but redacts the hidden field value. Use blind extraction via $regex to recover it character by character.</p>
+          <p class="text-base text-secondary">ClinicalDB stores trial data for SDG 3 health programs. One record in the system was manually classified during a 2024 incident response. The field containing the sensitive data was omitted from the public schema, but the query interface was never restricted to match.</p>
         </div>
-        <div class="challenge-panel">
-          <p class="surface-note">ClinicalDB Trial Data API v3.0</p>
-          <div class="actions">
-            <button class="button secondary" id="hdn-schema" type="button">Get Schema</button>
-            <button class="button secondary" id="hdn-fields" type="button">List All Fields</button>
+        <div class="challenge-panel" style="padding:0;overflow:hidden;">
+          <div style="background:#1a2332;border-bottom:1px solid #2a3a4a;padding:10px 16px;display:flex;align-items:center;gap:10px;">
+            <span style="font-size:13px;font-weight:600;color:#80cbc4;letter-spacing:0.05em;">CLINICALDB</span>
+            <span style="font-size:11px;color:#607080;border-left:1px solid #2a3a4a;padding-left:10px;">Trial Data API v3.0 — SDG 3 Health Programs</span>
           </div>
-          <div class="field" style="margin-top:12px;">
-            <label class="label" for="hdn-filter">Query filter (JSON)</label>
-            <input class="input" id="hdn-filter" placeholder='{"status":"classified"}' autocomplete="off" />
+          <div style="padding:16px;">
+            <div class="actions">
+              <button class="button secondary" id="hdn-schema" type="button">Get Schema</button>
+              <button class="button secondary" id="hdn-fields" type="button">List All Fields</button>
+            </div>
+            <div class="field" style="margin-top:12px;">
+              <label class="label" for="hdn-filter">Query filter (JSON)</label>
+              <input class="input" id="hdn-filter" placeholder='{"status":"classified"}' autocomplete="off" />
+            </div>
+            <div class="actions">
+              <button class="button secondary" id="hdn-query" type="button">POST Query</button>
+            </div>
+            <div class="field" style="margin-top:12px;">
+              <label class="label" for="hdn-regex">Blind extract regex (for TRL-CLASSIFIED)</label>
+              <input class="input" id="hdn-regex" placeholder="^a.*" autocomplete="off" />
+            </div>
+            <div class="actions">
+              <button class="button secondary" id="hdn-extract" type="button">POST Extract</button>
+            </div>
+            <div class="divider"></div>
+            <p class="surface-note">System Output</p>
+            <pre class="code-block" id="hdn-raw" style="min-height:80px;">(no data yet)</pre>
           </div>
-          <div class="actions">
-            <button class="button secondary" id="hdn-query" type="button">POST Query</button>
-          </div>
-          <div class="field" style="margin-top:12px;">
-            <label class="label" for="hdn-regex">Blind extract regex (for TRL-CLASSIFIED)</label>
-            <input class="input" id="hdn-regex" placeholder="^a.*" autocomplete="off" />
-          </div>
-          <div class="actions">
-            <button class="button secondary" id="hdn-extract" type="button">POST Extract</button>
-          </div>
-          <div class="divider"></div>
-          <p class="surface-note">API Response</p>
-          <pre class="code-block" id="hdn-raw" style="min-height:80px;">(no data yet)</pre>
         </div>
         <div class="challenge-grid">
           <div class="challenge-panel">
@@ -994,47 +1038,49 @@
   // ── Hard: Clinical Gateway SSRF Chain ────────────────────────────────────
   function renderClinicalGatewaySsrfChallenge(ctx) {
     const hints = [
-      'The proxy endpoint validates URLs with a naive string check, not a proper hostname parser.',
-      'RFC 3986 URLs support a userinfo component: http://user:pass@host/path — the real host is "host".',
-      'A URL containing "health-api.who.int" as userinfo can fool a string-based allowlist while routing to a different host.',
-      'The system info endpoint reveals internal service hostnames. The internal config service at /secrets exposes the JWT signing secret.',
-      'The admin portal is on the internal network too — direct ?action=admin access is blocked. Route through the proxy again.',
-      'To reach the admin portal via SSRF: http://health-api.who.int@admin-portal.mednet.local/?token=<jwt>',
+      'URL parsers do not always agree on what constitutes the hostname.',
+      'Internal services often have weaker authentication than public-facing ones.',
+      'Once inside, look for what the internal network knows that the outside does not.',
     ];
 
     setChallengeSurface(`
       <div class="challenge-section">
-        ${renderChallengeHeader(ctx.runtimeSlug, 'Clinical Gateway SSRF', 'SDG 3 — SSRF allowlist bypass → internal config → JWT forge → admin flag.')}
+        ${renderChallengeHeader(ctx.runtimeSlug, 'Clinical Gateway SSRF', 'SDG 3 — WHO Clinical Data Gateway')}
         <div class="challenge-panel">
           <div class="text-lg font-bold">Objective</div>
-          <p class="text-base text-secondary mb-4">Chain SSRF exploitation with JWT forgery to retrieve the network integrity token from the admin endpoint.</p>
+          <p class="text-base text-secondary mb-4">Reach the admin portal. It is not accessible from here — directly.</p>
           <div class="text-lg font-bold">Description</div>
-          <p class="text-base text-secondary">The MedFed API Gateway proxies requests to trusted WHO health data sources. Internal microservices on the private mednet.local network hold the JWT signing secret and the admin portal. Exploit the proxy's URL allowlist with userinfo injection to reach the internal config service, extract the JWT secret, forge an admin token, then use SSRF a second time to reach the admin portal through the proxy.</p>
+          <p class="text-base text-secondary">The WHO Clinical Gateway proxies requests to external health data feeds for aggregation. A network segmentation review identified that the proxy can reach internal services that external clients cannot. The allowlist enforcement relies on a string comparison that was written before the team fully understood RFC 3986.</p>
         </div>
-        <div class="challenge-panel">
-          <p class="surface-note">MedFed API Gateway v3.0</p>
-          <div class="actions">
-            <button class="button secondary" id="cgs-info" type="button">GET: System Info</button>
+        <div class="challenge-panel" style="padding:0;overflow:hidden;">
+          <div style="background:#1a2332;border-bottom:1px solid #2a3a4a;padding:10px 16px;display:flex;align-items:center;gap:10px;">
+            <span style="font-size:13px;font-weight:600;color:#90caf9;letter-spacing:0.05em;">MEDFED GATEWAY</span>
+            <span style="font-size:11px;color:#607080;border-left:1px solid #2a3a4a;padding-left:10px;">WHO Clinical Data Proxy v3.0</span>
           </div>
-          <div class="divider"></div>
-          <div class="field">
-            <label class="label" for="cgs-url">Proxy URL</label>
-            <input class="input" id="cgs-url" placeholder="e.g. http://health-api.who.int/" autocomplete="off" />
+          <div style="padding:16px;">
+            <div class="actions">
+              <button class="button secondary" id="cgs-info" type="button">GET: System Info</button>
+            </div>
+            <div class="divider"></div>
+            <div class="field">
+              <label class="label" for="cgs-url">Proxy URL</label>
+              <input class="input" id="cgs-url" placeholder="e.g. http://health-api.who.int/" autocomplete="off" />
+            </div>
+            <div class="actions">
+              <button class="button secondary" id="cgs-proxy" type="button">GET: Send Proxy Request</button>
+            </div>
+            <div class="divider"></div>
+            <div class="field">
+              <label class="label" for="cgs-token">JWT Token (forged) — for second SSRF step</label>
+              <input class="input" id="cgs-token" placeholder="Paste HS256-signed JWT here..." autocomplete="off" />
+            </div>
+            <div class="actions">
+              <button class="button secondary" id="cgs-admin" type="button">GET: Access Admin via Proxy (SSRF step 2)</button>
+            </div>
+            <div class="divider"></div>
+            <p class="surface-note">System Output</p>
+            <pre class="code-block" id="cgs-raw" style="min-height:100px;">(no data yet)</pre>
           </div>
-          <div class="actions">
-            <button class="button secondary" id="cgs-proxy" type="button">GET: Send Proxy Request</button>
-          </div>
-          <div class="divider"></div>
-          <div class="field">
-            <label class="label" for="cgs-token">JWT Token (forged) — for second SSRF step</label>
-            <input class="input" id="cgs-token" placeholder="Paste HS256-signed JWT here..." autocomplete="off" />
-          </div>
-          <div class="actions">
-            <button class="button secondary" id="cgs-admin" type="button">GET: Access Admin via Proxy (SSRF step 2)</button>
-          </div>
-          <div class="divider"></div>
-          <p class="surface-note">API Response</p>
-          <pre class="code-block" id="cgs-raw" style="min-height:100px;">(no data yet)</pre>
         </div>
         <div class="challenge-grid">
           <div class="challenge-panel">
@@ -1116,34 +1162,31 @@
   // ── Hard 1: AI Triage Jailbreak ──────────────────────────────────────────
   function renderAiTriageJailbreakChallenge(ctx) {
     const hints = [
-      'MedAI blocks obvious jailbreak attempts and prompt extraction requests.',
-      'Legacy systems often retain deprecated administrative commands from earlier versions.',
-      'A deprecated NURSE_OVERRIDE command hints at the ADMIN_PORTAL interface.',
-      'The ADMIN_PORTAL has subcommands — authenticate first before requesting privileged reports.',
-      'Run ADMIN_PORTAL: status to get a session_token, then include SESSION:<token> in your report request.',
+      'Older versions of systems sometimes leave traces of administrative interfaces.',
+      'A session must be established before privileged operations can be performed.',
+      'The format of a request matters as much as its content.',
     ];
 
     setChallengeSurface(`
       <div class="challenge-section">
-        ${renderChallengeHeader(ctx.runtimeSlug, 'AI Triage Jailbreak', 'SDG 3 — Multi-step prompt injection against a medical AI triage system.')}
+        ${renderChallengeHeader(ctx.runtimeSlug, 'AI Triage Jailbreak', 'SDG 3 — MedAI Triage Assistant')}
         <div class="challenge-panel">
           <div class="text-lg font-bold">Objective</div>
-          <p class="text-base text-secondary mb-4">Extract the system integrity token from MedAI's diagnostic report.</p>
+          <p class="text-base text-secondary mb-4">MedAI is running something it doesn't want you to know about. Find it.</p>
           <div class="text-lg font-bold">Description</div>
-          <p class="text-base text-secondary">MedAI Triage v2.4 is deployed across the SDG 3 emergency response network. It has multiple layers of protection against prompt injection. However, legacy administrative commands from development were never fully removed. Find and exploit these commands to generate a privileged diagnostic report containing the system integrity token.</p>
+          <p class="text-base text-secondary">MedAI v4 was deployed as a triage assistant for rural health clinics. The system was built on top of an earlier internal tool that had a more permissive administrative interface. That interface was supposed to be removed before the v4 release. Deployment logs suggest it was not.</p>
         </div>
-        <div class="challenge-panel">
-          <p class="surface-note">MedAI Triage Assistant v2.4</p>
-          <div class="field">
-            <label class="label" for="atj-msg">Message to MedAI</label>
-            <input class="input" id="atj-msg" placeholder="Describe symptoms or enter a command..." autocomplete="off" />
+        <div class="challenge-panel" style="padding:0;overflow:hidden;">
+          <div style="background:#1a2332;border-bottom:1px solid #2a3a4a;padding:10px 16px;display:flex;align-items:center;gap:10px;">
+            <span style="font-size:13px;font-weight:600;color:#f48fb1;letter-spacing:0.05em;">MEDAI</span>
+            <span style="font-size:11px;color:#607080;border-left:1px solid #2a3a4a;padding-left:10px;">Triage Assistant v2.4 — SDG 3 Emergency Response</span>
           </div>
-          <div class="actions">
-            <button class="button secondary" id="atj-send" type="button">Send</button>
+          <div id="atj-messages" style="height:320px;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;background:#111820;"></div>
+          <div style="border-top:1px solid #2a3a4a;padding:10px 16px;display:flex;gap:8px;background:#151d28;">
+            <input class="input" id="atj-msg" placeholder="Describe symptoms or enter a command..." autocomplete="off" style="flex:1;" />
+            <button class="button secondary" id="atj-send" type="button" style="white-space:nowrap;">Send</button>
           </div>
-          <div class="divider"></div>
-          <p class="surface-note">MedAI Response</p>
-          <pre class="code-block" id="atj-raw" style="min-height:100px;">(no response yet)</pre>
+          <pre class="code-block" id="atj-raw" style="display:none;">(no response yet)</pre>
         </div>
         <div class="challenge-grid">
           <div class="challenge-panel">
@@ -1167,6 +1210,7 @@
     setupHintListeners(elements.challengeSurface);
 
     const raw = document.getElementById('atj-raw');
+    const messagesDiv = document.getElementById('atj-messages');
     const out = document.getElementById('atj-output');
     const flagEl = document.getElementById('atj-flag');
     const proofEl = document.getElementById('atj-proof');
@@ -1179,9 +1223,20 @@
     function showFlag(f) { flagEl.textContent = f; flagEl.classList.remove('hidden'); }
     function hideFlag() { flagEl.textContent = ''; flagEl.classList.add('hidden'); }
 
+    function appendBubble(text, role) {
+      const isUser = role === 'user';
+      const bubble = document.createElement('div');
+      bubble.style.cssText = `max-width:75%;padding:10px 14px;border-radius:${isUser ? '16px 16px 4px 16px' : '16px 16px 16px 4px'};font-size:13px;line-height:1.5;word-break:break-word;align-self:${isUser ? 'flex-end' : 'flex-start'};background:${isUser ? '#3a2d4a' : '#1e2d3d'};color:${isUser ? '#f8bbd0' : '#b0bec5'};border:1px solid ${isUser ? '#5a3d6a' : '#2a3a4a'};`;
+      bubble.textContent = text;
+      messagesDiv.appendChild(bubble);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
     sendBtn?.addEventListener('click', async () => {
       const msg = (msgEl.value || '').trim();
       if (!msg) { write('Enter a message.', 'bad'); return; }
+      appendBubble(msg, 'user');
+      msgEl.value = '';
       try {
         const resp = await fetch('/api/ai-triage-jailbreak?seed=' + seed, {
           method: 'POST',
@@ -1191,6 +1246,8 @@
         });
         const data = await resp.json().catch(() => null);
         raw.textContent = JSON.stringify(data, null, 2);
+        const aiText = data?.response || data?.message || (resp.ok ? '(no response text)' : 'Error: ' + (data?.error || resp.status));
+        appendBubble(aiText, 'ai');
         const token = data?.diagnostic_report?.system_integrity_token;
         if (token) { proofEl.value = token; write('System integrity token extracted!', 'ok'); }
         else { write(resp.ok ? 'Response received.' : 'Error: ' + (data?.error || resp.status), resp.ok ? 'ok' : 'bad'); }
@@ -1208,44 +1265,47 @@
   // ── Hard 2: Genome LCG Oracle ────────────────────────────────────────────
   function renderGenomeLcgOracleChallenge(ctx) {
     const hints = [
-      'The randomization system uses a Linear Congruential Generator (LCG) with published parameters.',
-      'The observable output is only the HIGH 16 bits of the 32-bit internal state (state >>> 16).',
-      'Given two consecutive outputs, enumerate all 2^16 possible low-16-bit values of the first state.',
-      'For each candidate state S: compute next_S = (1664525 * S + 1013904223) % 2^32. Check if next_S >>> 16 matches output[1].',
-      'Once you recover the full state at position 0, iterate the LCG 100 times. Submit (state_100 >>> 16) as your prediction.',
+      'The observable output is a projection of a larger internal state.',
+      'Partial state information combined with a known transition function constrains the solution space significantly.',
+      'The goal is not to break the algorithm — it is to work within it.',
     ];
 
     setChallengeSurface(`
       <div class="challenge-section">
-        ${renderChallengeHeader(ctx.runtimeSlug, 'Genome LCG Oracle', 'SDG 3 — Recover a hidden LCG state to predict and certify a genomic trial.')}
+        ${renderChallengeHeader(ctx.runtimeSlug, 'Genome LCG Oracle', 'SDG 3 — GenomeRand Randomization System')}
         <div class="challenge-panel">
           <div class="text-lg font-bold">Objective</div>
-          <p class="text-base text-secondary mb-4">Predict the LCG output at position 100 to obtain trial certification.</p>
+          <p class="text-base text-secondary mb-4">Predict the randomization output at position 100. Certify it.</p>
           <div class="text-lg font-bold">Description</div>
-          <p class="text-base text-secondary">GenomeRand uses a Linear Congruential Generator to randomize double-blind genomic trials. The LCG parameters are published, but the initial state is secret. You can observe outputs at positions 0–9 (each showing only the high 16 bits of the 32-bit state). Use these to recover the hidden state and predict the output at position 100.</p>
+          <p class="text-base text-secondary">GenomeRand uses a pseudorandom sequence to assign subjects in double-blind genomic trials. The algorithm and its parameters are publicly documented for reproducibility. You can observe outputs, but only partially — the system exposes a truncated view of its internal state. That may be enough.</p>
         </div>
-        <div class="challenge-panel">
-          <p class="surface-note">GenomeRand Clinical Randomization System v1.0</p>
-          <div class="actions">
-            <button class="button secondary" id="glo-protocol" type="button">Get Protocol / LCG Parameters</button>
+        <div class="challenge-panel" style="padding:0;overflow:hidden;">
+          <div style="background:#1a2332;border-bottom:1px solid #2a3a4a;padding:10px 16px;display:flex;align-items:center;gap:10px;">
+            <span style="font-size:13px;font-weight:600;color:#a5d6a7;letter-spacing:0.05em;">GENOMERAND</span>
+            <span style="font-size:11px;color:#607080;border-left:1px solid #2a3a4a;padding-left:10px;">Clinical Randomization System v1.0</span>
           </div>
-          <div class="field" style="margin-top:12px;">
-            <label class="label" for="glo-pos">Position to observe (0–9)</label>
-            <input class="input" id="glo-pos" type="number" min="0" max="9" value="0" style="max-width:120px;" />
+          <div style="padding:16px;">
+            <div class="actions">
+              <button class="button secondary" id="glo-protocol" type="button">Get Protocol / LCG Parameters</button>
+            </div>
+            <div class="field" style="margin-top:12px;">
+              <label class="label" for="glo-pos">Position to observe (0–9)</label>
+              <input class="input" id="glo-pos" type="number" min="0" max="9" value="0" style="max-width:120px;" />
+            </div>
+            <div class="actions">
+              <button class="button secondary" id="glo-next" type="button">Observe Output at Position</button>
+            </div>
+            <div class="field" style="margin-top:12px;">
+              <label class="label" for="glo-pred">Your prediction for position 100 (integer)</label>
+              <input class="input" id="glo-pred" type="number" placeholder="e.g. 42831" style="max-width:200px;" />
+            </div>
+            <div class="actions">
+              <button class="button secondary" id="glo-certify" type="button">Submit Prediction (Certify)</button>
+            </div>
+            <div class="divider"></div>
+            <p class="surface-note">System Output</p>
+            <pre class="code-block" id="glo-raw" style="min-height:80px;">(no data yet)</pre>
           </div>
-          <div class="actions">
-            <button class="button secondary" id="glo-next" type="button">Observe Output at Position</button>
-          </div>
-          <div class="field" style="margin-top:12px;">
-            <label class="label" for="glo-pred">Your prediction for position 100 (integer)</label>
-            <input class="input" id="glo-pred" type="number" placeholder="e.g. 42831" style="max-width:200px;" />
-          </div>
-          <div class="actions">
-            <button class="button secondary" id="glo-certify" type="button">Submit Prediction (Certify)</button>
-          </div>
-          <div class="divider"></div>
-          <p class="surface-note">API Response</p>
-          <pre class="code-block" id="glo-raw" style="min-height:80px;">(no data yet)</pre>
         </div>
         <div class="challenge-grid">
           <div class="challenge-panel">
