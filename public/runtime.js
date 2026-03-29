@@ -1593,11 +1593,17 @@
     });
 
     if (!response.ok) {
+      // Handle timeout responses explicitly
+      if (response.status === 504 || response.status === 408) {
+        throw new Error('Instance timed out. Please relaunch the challenge from the contest site.');
+      }
+
       // Try to parse error message from response
       let errorMessage = `HTTP ${response.status}`;
       try {
         const errorData = await response.json();
-        errorMessage = errorData.error || errorData.message || errorMessage;
+        const raw = errorData.error || errorData.message || errorMessage;
+        errorMessage = (typeof raw === 'string') ? raw : JSON.stringify(raw);
       } catch {
         // Response wasn't JSON, use status text
         errorMessage = response.statusText || errorMessage;
@@ -1785,7 +1791,12 @@
       }
 
       // Determine error type and show appropriate message
-      if (error instanceof TypeError && error.message.includes('fetch')) {
+      if (message.includes('timed out') || message.includes('instance timed out')) {
+        showError(
+          'Instance Timed Out',
+          'The challenge instance has timed out. Please relaunch the challenge from the contest site.'
+        );
+      } else if (error instanceof TypeError && error.message.includes('fetch')) {
         showError(
           'Network Error',
           'Failed to connect to the challenge server. Please check your internet connection.'
