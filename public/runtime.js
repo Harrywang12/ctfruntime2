@@ -1519,10 +1519,52 @@
     elements.errorPanel.classList.add('hidden');
     elements.runtimeInfo.classList.remove('hidden');
 
-    // Display masked IDs (never show raw artifact_seed in UI)
+    // Display masked IDs
     elements.infoContest.textContent = runtimeState.contest_id ? maskUUID(runtimeState.contest_id) : 'PRACTICE';
     elements.infoChallenge.textContent = maskUUID(runtimeState.challenge_id);
     elements.infoTeam.textContent = runtimeState.team_id ? maskUUID(runtimeState.team_id) : 'ANON';
+
+    // Display seed and curl section
+    const seed = runtimeState.artifact_seed;
+    if (seed) {
+      const seedRow = document.getElementById('seed-row');
+      const seedEl = document.getElementById('info-seed');
+      const curlSection = document.getElementById('curl-section');
+      const curlExample = document.getElementById('curl-example');
+      const curlCopyBtn = document.getElementById('curl-copy-btn');
+
+      if (seedRow && seedEl) {
+        seedEl.textContent = seed;
+        seedEl.title = 'Click to copy seed';
+        seedRow.style.display = '';
+        seedEl.addEventListener('click', () => {
+          navigator.clipboard.writeText(seed).then(() => {
+            const prev = seedEl.textContent;
+            seedEl.textContent = 'Copied!';
+            setTimeout(() => { seedEl.textContent = prev; }, 1200);
+          });
+        });
+      }
+
+      if (curlSection && curlExample && curlCopyBtn) {
+        const slug = normalizeSlug(route && route.runtimeSlug);
+        const baseUrl = window.location.origin;
+        const cmd = `curl "${baseUrl}/api/${slug}?seed=${seed}"`;
+        curlExample.textContent = cmd;
+        curlSection.style.display = '';
+
+        curlCopyBtn.addEventListener('click', () => {
+          navigator.clipboard.writeText(cmd).then(() => {
+            curlCopyBtn.textContent = 'COPIED';
+            curlCopyBtn.classList.add('copied');
+            setTimeout(() => {
+              curlCopyBtn.textContent = 'COPY';
+              curlCopyBtn.classList.remove('copied');
+            }, 1500);
+          });
+        });
+      }
+    }
 
     // Render the challenge surface selected by runtimeSlug
     renderChallengeSurface(runtimeState, route, launchToken);

@@ -397,6 +397,61 @@ body {
   margin: 14px 16px;
 }
 
+/* Seed & Curl Section */
+.meta-val-seed {
+  font-size: 10px;
+  word-break: break-all;
+  max-width: 160px;
+  text-align: right;
+  cursor: pointer;
+  color: var(--color-accent);
+}
+
+.meta-val-seed:hover {
+  text-decoration: underline;
+}
+
+.curl-box {
+  position: relative;
+  background: rgba(5, 7, 11, 0.85);
+  border: 1px solid rgba(78, 255, 149, 0.18);
+  padding: 10px 12px;
+  padding-right: 56px;
+  overflow-x: auto;
+}
+
+.curl-box code {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--color-text-primary);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.curl-copy-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  padding: 3px 8px;
+  background: rgba(55, 255, 139, 0.12);
+  color: var(--color-accent);
+  border: 1px solid rgba(55, 255, 139, 0.3);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.curl-copy-btn:hover {
+  background: rgba(55, 255, 139, 0.25);
+}
+
+.curl-copy-btn.copied {
+  color: var(--color-success);
+  border-color: var(--color-success);
+}
+
 /* Challenge Surface */
 .challenge-surface {
   margin: 16px;
