@@ -59,9 +59,6 @@
     statusIcon: document.getElementById('status-icon'),
     statusText: document.getElementById('status-text'),
     runtimeInfo: document.getElementById('runtime-info'),
-    infoContest: document.getElementById('info-contest'),
-    infoChallenge: document.getElementById('info-challenge'),
-    infoTeam: document.getElementById('info-team'),
     challengeSurface: document.getElementById('challenge-surface'),
     errorPanel: document.getElementById('error-panel'),
     errorTitle: document.getElementById('error-title'),
@@ -1442,18 +1439,6 @@
   }
 
   /**
-   * Mask a UUID for display purposes (show first/last segments only).
-   */
-  function maskUUID(uuid) {
-    if (!uuid || uuid.length < 8) return uuid;
-    const parts = uuid.split('-');
-    if (parts.length === 5) {
-      return `${parts[0]}...${parts[4]}`;
-    }
-    return `${uuid.slice(0, 8)}...${uuid.slice(-4)}`;
-  }
-
-  /**
    * Simple deterministic hash function for deriving values from artifact_seed.
    * This is used to create per-team variations in the challenge surface.
    *
@@ -1518,11 +1503,6 @@
     elements.statusPanel.classList.add('hidden');
     elements.errorPanel.classList.add('hidden');
     elements.runtimeInfo.classList.remove('hidden');
-
-    // Display masked IDs
-    elements.infoContest.textContent = runtimeState.contest_id ? maskUUID(runtimeState.contest_id) : 'PRACTICE';
-    elements.infoChallenge.textContent = maskUUID(runtimeState.challenge_id);
-    elements.infoTeam.textContent = runtimeState.team_id ? maskUUID(runtimeState.team_id) : 'ANON';
 
     // Display seed and curl section
     const seed = runtimeState.artifact_seed;
