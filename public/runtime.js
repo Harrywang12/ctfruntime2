@@ -694,7 +694,7 @@
           <p class="surface-note">Manual URL Override (for advanced exploitation)</p>
           <div class="field">
             <label class="label" for="epp-custom">Custom query string suffix</label>
-            <input class="input" id="epp-custom" placeholder="e.g. &patient_id=SYS-ADMIN" autocomplete="off" />
+            <input class="input" id="epp-custom" autocomplete="off" />
             <p class="help">Appended to the base request URL after seed and the first patient_id.</p>
           </div>
           <div class="actions">
