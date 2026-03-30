@@ -337,27 +337,27 @@
             <span style="font-size:11px;color:#607080;border-left:1px solid #2a3a4a;padding-left:10px;">Cold Chain Monitor — WHO Immunization Network</span>
           </div>
           <div style="padding:16px;">
-            <p class="surface-note">Step 1 — Authenticate: GET ?action=status</p>
+            <p class="surface-note">System Status</p>
             <div class="actions">
-              <button class="button secondary" id="vcc-status" type="button">GET: Fetch Status &amp; Session Token</button>
+              <button class="button secondary" id="vcc-status" type="button">Check System Status</button>
             </div>
             <div class="field" style="margin-top:8px;">
-              <label class="label" for="vcc-token">Session token (auto-populated from status response)</label>
-              <input class="input" id="vcc-token" placeholder="Fetch status to get session_token..." autocomplete="off" />
+              <label class="label" for="vcc-token">Session credential</label>
+              <input class="input" id="vcc-token" placeholder="" autocomplete="off" />
             </div>
             <div class="divider"></div>
-            <p class="surface-note">Step 1 Response</p>
+            <p class="surface-note">Response</p>
             <pre class="code-block" id="vcc-raw1" style="min-height:80px;">(no data yet)</pre>
           </div>
         </div>
         <div class="challenge-panel" style="padding:0;overflow:hidden;">
           <div style="padding:16px;">
-            <p class="surface-note">Step 2 — Generate Report: POST ?action=generate_report</p>
+            <p class="surface-note">Report Generation</p>
             <div class="actions">
-              <button class="button secondary" id="vcc-report" type="button">POST: Generate Calibration Report</button>
+              <button class="button secondary" id="vcc-report" type="button">Request Compliance Report</button>
             </div>
             <div class="divider"></div>
-            <p class="surface-note">Step 2 Response</p>
+            <p class="surface-note">Response</p>
             <pre class="code-block" id="vcc-raw2" style="min-height:80px;">(no data yet)</pre>
           </div>
         </div>
@@ -691,25 +691,25 @@
           </div>
         </div>
         <div class="challenge-panel">
-          <p class="surface-note">Manual URL Override (for advanced exploitation)</p>
+          <p class="surface-note">Advanced Query</p>
           <div class="field">
-            <label class="label" for="epp-custom">Custom query string suffix</label>
+            <label class="label" for="epp-custom">Additional query parameters</label>
             <input class="input" id="epp-custom" autocomplete="off" />
-            <p class="help">Appended to the base request URL after seed and the first patient_id.</p>
+            <p class="help">Appended to the request URL.</p>
           </div>
           <div class="actions">
             <button class="button secondary" id="epp-custom-fetch" type="button">Fetch with Custom Params</button>
           </div>
         </div>
         <div class="challenge-panel">
-          <p class="surface-note">Step 2 — Verify Admin Access Code</p>
-          <p class="text-base text-secondary" style="margin-bottom:8px;">Once you have the <code>admin_access_code</code> from the SYS-ADMIN record, POST it here to obtain the authorization token.</p>
+          <p class="surface-note">Verification</p>
+          <p class="text-base text-secondary" style="margin-bottom:8px;">Submit an access code to verify authorization.</p>
           <div class="field">
-            <label class="label" for="epp-code">admin_access_code (auto-populated on success)</label>
-            <input class="input" id="epp-code" placeholder="Paste admin_access_code here..." autocomplete="off" />
+            <label class="label" for="epp-code">Access code</label>
+            <input class="input" id="epp-code" placeholder="" autocomplete="off" />
           </div>
           <div class="actions">
-            <button class="button secondary" id="epp-verify" type="button">POST ?action=verify</button>
+            <button class="button secondary" id="epp-verify" type="button">Verify Access</button>
           </div>
           <div class="divider"></div>
           <p class="surface-note">Verify Response</p>
@@ -833,7 +833,7 @@
             </div>
             <div class="field" style="margin-top:12px;">
               <label class="label" for="pxo-pt">Plaintext to encrypt (hex)</label>
-              <input class="input" id="pxo-pt" placeholder="e.g. 4141414141414141... (hex bytes)" autocomplete="off" />
+              <input class="input" id="pxo-pt" placeholder="hex-encoded bytes" autocomplete="off" />
             </div>
             <div class="actions">
               <button class="button secondary" id="pxo-enc" type="button">Encrypt Plaintext</button>
@@ -933,14 +933,14 @@
             </div>
             <div class="field" style="margin-top:12px;">
               <label class="label" for="hdn-filter">Query filter (JSON)</label>
-              <input class="input" id="hdn-filter" placeholder='{"status":"classified"}' autocomplete="off" />
+              <input class="input" id="hdn-filter" placeholder='JSON object' autocomplete="off" />
             </div>
             <div class="actions">
               <button class="button secondary" id="hdn-query" type="button">POST Query</button>
             </div>
             <div class="field" style="margin-top:12px;">
-              <label class="label" for="hdn-regex">Blind extract regex (for TRL-CLASSIFIED)</label>
-              <input class="input" id="hdn-regex" placeholder="^a.*" autocomplete="off" />
+              <label class="label" for="hdn-regex">Extract pattern (regex)</label>
+              <input class="input" id="hdn-regex" placeholder="regular expression" autocomplete="off" />
             </div>
             <div class="actions">
               <button class="button secondary" id="hdn-extract" type="button">POST Extract</button>
@@ -1061,18 +1061,18 @@
             <div class="divider"></div>
             <div class="field">
               <label class="label" for="cgs-url">Proxy URL</label>
-              <input class="input" id="cgs-url" placeholder="e.g. http://health-api.who.int/" autocomplete="off" />
+              <input class="input" id="cgs-url" placeholder="URL to proxy" autocomplete="off" />
             </div>
             <div class="actions">
               <button class="button secondary" id="cgs-proxy" type="button">GET: Send Proxy Request</button>
             </div>
             <div class="divider"></div>
             <div class="field">
-              <label class="label" for="cgs-token">JWT Token (forged) — for second SSRF step</label>
-              <input class="input" id="cgs-token" placeholder="Paste HS256-signed JWT here..." autocomplete="off" />
+              <label class="label" for="cgs-token">Authorization token</label>
+              <input class="input" id="cgs-token" placeholder="Bearer token" autocomplete="off" />
             </div>
             <div class="actions">
-              <button class="button secondary" id="cgs-admin" type="button">GET: Access Admin via Proxy (SSRF step 2)</button>
+              <button class="button secondary" id="cgs-admin" type="button">Authenticated Proxy Request</button>
             </div>
             <div class="divider"></div>
             <p class="surface-note">System Output</p>
