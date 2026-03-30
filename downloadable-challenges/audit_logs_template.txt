@@ -3,16 +3,13 @@ SECURE AUDIT LOG EXPORT - ClinCore Health Systems v3.2
 Export Date: 2026-03-17  Period: 2026-03-15 to 2026-03-17
 Classification: CONFIDENTIAL - Internal Use Only
 Log Integrity: SHA-256 chain verified
-Token Encoding: RFC 4648 Base32 (all tokens are base32-encoded before logging)
-Encryption: 4-byte repeating XOR applied to sensitive tokens before encoding
-Flag Format: SDG{...}
 =================================================================
 
 -- SESSION AUDIT RECORDS --
 
 [2026-03-15 06:00:01] SYSTEM: Service started (PID: 14823)
 [2026-03-15 06:00:04] SYSTEM: Loading security policies [OK]
-[2026-03-15 06:00:05] SYSTEM: Self-test token: ORSXG5A= [expected: "test"]
+[2026-03-15 06:00:05] SYSTEM: Token self-test: ORSXG5A= [expected: "test"]
 [2026-03-15 06:00:07] SYSTEM: Connecting to audit relay [10.0.2.5:9200]
 [2026-03-15 06:00:09] SYSTEM: Relay connected [OK]
 [2026-03-15 06:01:22] CRON: Scheduled backup initialized
@@ -62,6 +59,7 @@ Flag Format: SDG{...}
 [2026-03-15 16:00:03] CRON: Archived: audit_2026-03-14.log.gz [OK]
 [2026-03-15 16:00:04] SYSTEM: Rotating encryption keys...
 [2026-03-15 16:00:04] ENCRYPT: Key rotation token: ONSWG4TFORQXIIDBNZSCAZDPNR2WM===
+[2026-03-15 16:00:05] ENCRYPT: Cipher config: XOR mode=repeating key_len=4
 [2026-03-15 16:00:06] SYSTEM: Key rotation complete [OK]
 [2026-03-15 18:00:00] CRON: Hourly integrity check started
 [2026-03-15 18:00:03] CRON: Integrity check: 4838 records verified [OK]
