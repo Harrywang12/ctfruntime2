@@ -9,6 +9,7 @@ Log Integrity: SHA-256 chain verified
 
 [2026-03-15 06:00:01] SYSTEM: Service started (PID: 14823)
 [2026-03-15 06:00:04] SYSTEM: Loading security policies [OK]
+[2026-03-15 06:00:05] SYSTEM: Self-test token: ORSXG5A= [expected: "test"]
 [2026-03-15 06:00:07] SYSTEM: Connecting to audit relay [10.0.2.5:9200]
 [2026-03-15 06:00:09] SYSTEM: Relay connected [OK]
 [2026-03-15 06:01:22] CRON: Scheduled backup initialized
