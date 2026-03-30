@@ -3,6 +3,9 @@ SECURE AUDIT LOG EXPORT - ClinCore Health Systems v3.2
 Export Date: 2026-03-17  Period: 2026-03-15 to 2026-03-17
 Classification: CONFIDENTIAL - Internal Use Only
 Log Integrity: SHA-256 chain verified
+Token Encoding: RFC 4648 Base32 (all tokens are base32-encoded before logging)
+Encryption: 4-byte repeating XOR applied to sensitive tokens before encoding
+Flag Format: SDG{...}
 =================================================================
 
 -- SESSION AUDIT RECORDS --
